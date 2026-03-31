@@ -16,6 +16,8 @@
     @apply bg-bg text-white font-sans antialiased;
     direction: rtl;
     -webkit-tap-highlight-color: transparent;
+    overscroll-behavior-y: none;
+    touch-action: manipulation;
   }
   
   input, select, textarea, button {
@@ -24,7 +26,7 @@
 }
 
 .glass {
-  @apply bg-white/5 backdrop-blur-xl border border-white/10;
+  @apply bg-white/5 backdrop-blur-md border border-white/10;
 }
 
 .card-gradient {

@@ -65,7 +65,8 @@ import {
   Fingerprint
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
-import { format, isSameDay, parseISO, addMinutes } from 'date-fns';
+import { LocalNotifications } from '@capacitor/local-notifications';
+import { format, parseISO, isToday, isPast, isFuture, addMinutes } from 'date-fns';
 import { ar } from 'date-fns/locale';
 import { 
   LineChart, 
@@ -656,7 +657,20 @@ export default function App() {
           navigator.vibrate([500, 200, 500, 200, 500]);
         }
 
-        // Browser Notification
+        // Capacitor Native Notification
+        try {
+          LocalNotifications.schedule({
+            notifications: [{
+              id: new Date().getTime(),
+              title: "🔔 تنبيه: موعد جلسة الآن!",
+              body: `القضية: ${sessionToAlarm.caseTitle}\nالموكل: ${sessionToAlarm.clientName}`,
+              schedule: { at: new Date() },
+              sound: "beep.wav",
+            }]
+          });
+        } catch(e) { console.log('Capacitor Notification failed:', e); }
+
+        // Browser Notification (Fallback)
         if ("Notification" in window && Notification.permission === "granted") {
           navigator.serviceWorker.ready.then(registration => {
             registration.showNotification("🔔 تنبيه: موعد جلسة الآن!", {
@@ -785,10 +799,17 @@ export default function App() {
     }
   };
 
-  const enableSystem = () => {
+  const enableSystem = async () => {
     setHasInteracted(true);
     localStorage.setItem('lawyer_has_interacted', 'true');
     setShowWelcome(false);
+    
+    try {
+      if ("Notification" in window) {
+        await Notification.requestPermission();
+      }
+      await LocalNotifications.requestPermissions();
+    } catch (e) { console.log('Notification permission request failed:', e); }
     
     // Use a silent beep to unlock the context immediately and reliably
     const unlockAudio = new Audio(SILENT_BEEP);
@@ -1606,6 +1627,25 @@ ${clientsContext}`;
           </div>
         )}
       </AnimatePresence>
+
+      {/* Mobile Top Header (Resolves missing Settings in bottom nav) */}
+      <div className="md:hidden sticky top-0 bg-card/80 backdrop-blur-md border-b border-border z-40 px-4 py-3 flex items-center justify-between">
+        <div className="flex items-center gap-3">
+          <div className="w-10 h-10 bg-primary/20 rounded-full flex items-center justify-center text-primary">
+            <Scale size={20} />
+          </div>
+          <div>
+            <h1 className="font-bold text-sm truncate w-40">{lawyerProfile?.name || 'المحامي'}</h1>
+            <p className="text-[10px] text-white/50">النظام الذكي</p>
+          </div>
+        </div>
+        <button 
+          onClick={() => setActiveTab('settings')}
+          className={`p-2 rounded-xl transition-all ${activeTab === 'settings' ? 'bg-primary text-white' : 'bg-white/5 text-white/50 hover:bg-white/10 hover:text-white'}`}
+        >
+          <Settings size={20} />
+        </button>
+      </div>
 
       <Sidebar activeTab={activeTab} setActiveTab={setActiveTab} handleLogout={handleLogout} />
       
