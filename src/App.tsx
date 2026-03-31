@@ -1649,7 +1649,7 @@ ${clientsContext}`;
 
       <Sidebar activeTab={activeTab} setActiveTab={setActiveTab} handleLogout={handleLogout} />
       
-      <main className="md:pr-64 p-4 md:p-6 min-h-screen pb-24 md:pb-6">
+      <main className="md:pr-64 p-4 md:p-6 min-h-[100dvh] pb-24 md:pb-6">
         <div className="max-w-7xl mx-auto">
           <div className="flex justify-end mb-4">
             <SoundStatus />

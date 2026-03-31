@@ -4,6 +4,7 @@ const config: CapacitorConfig = {
   appId: 'com.muhammad.lawyerapp',
   appName: 'LawyerApp',
   webDir: 'dist',
+  backgroundColor: '#0a0a0f',
   plugins: {
     Keyboard: {
       resize: "Native",
