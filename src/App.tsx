@@ -2338,7 +2338,7 @@ ${clientsContext}`;
       </AnimatePresence>
 
       {/* Mobile Bottom Nav */}
-      <div className="md:hidden fixed bottom-0 left-0 right-0 bg-card/80 backdrop-blur-xl border-t border-border px-4 py-3 flex justify-between items-center z-40 safe-bottom">
+      <div className="md:hidden fixed bottom-0 left-0 right-0 bg-card/80 backdrop-blur-xl border-t border-border px-4 py-3 flex justify-between items-center z-40 safe-bottom hide-on-keyboard">
         <MobileNavItem icon={<LayoutDashboard size={20} />} active={activeTab === 'dashboard'} onClick={() => setActiveTab('dashboard')} />
         <MobileNavItem icon={<Briefcase size={20} />} active={activeTab === 'cases'} onClick={() => setActiveTab('cases')} />
         <MobileNavItem icon={<Receipt size={20} />} active={activeTab === 'statements'} onClick={() => setActiveTab('statements')} />

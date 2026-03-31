@@ -57,3 +57,9 @@
     scrollbar-width: none;
   }
 }
+
+@media (max-height: 600px) and (orientation: portrait) {
+  .hide-on-keyboard {
+    display: none !important;
+  }
+}
