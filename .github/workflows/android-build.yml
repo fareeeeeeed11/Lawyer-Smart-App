@@ -7,7 +7,10 @@ on:
 
 jobs:
   build:
-    runs-on: macos-latest # Best for both Android/iOS, or ubuntu-latest for just Android
+    runs-on: ubuntu-latest
+    
+    env:
+      FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
     
     steps:
     - name: Checkout Repository
@@ -30,15 +33,13 @@ jobs:
         distribution: 'temurin'
         java-version: '17'
 
-    - name: Capacitor Add Android
-      run: |
-        npx cap init LawyerApp com.muhammad.lawyerapp --web-dir dist
-        npx cap add android
-        npx cap sync android
+    - name: Sync Android Project
+      run: npx cap sync android
 
     - name: Build Android APK
       run: |
         cd android
+        chmod +x gradlew
         ./gradlew assembleDebug
 
     - name: Upload APK Artifact
