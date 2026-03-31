@@ -1525,11 +1525,11 @@ ${clientsContext}`;
 
   if (!isLoggedIn) {
     return (
-      <div className="min-h-screen bg-bg flex items-center justify-center p-4">
+      <div className="min-h-[100dvh] bg-bg flex flex-col items-center justify-center p-4 overflow-y-auto">
         <motion.div 
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
-          className="w-full max-w-md space-y-8"
+          className="w-full max-w-md space-y-8 my-auto py-8"
         >
           <div className="text-center">
             <div className="w-20 h-20 bg-primary rounded-3xl flex items-center justify-center mx-auto shadow-2xl shadow-primary/30 mb-6">
