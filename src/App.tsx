@@ -1598,7 +1598,7 @@ ${clientsContext}`;
   }
 
   return (
-    <div className="min-h-screen bg-bg text-white">
+    <div className="flex flex-col flex-1 min-h-[100dvh] bg-bg text-white w-full">
       {/* Welcome Modal for Interaction */}
       <AnimatePresence>
         {showWelcome && (
