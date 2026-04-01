@@ -17,7 +17,8 @@
     min-height: 100dvh;
     background-color: var(--color-bg);
     margin: 0;
-    padding: 0;
+    /* التعديل هنا: أضفنا المساحة السفلية للأزرار لترفع المحتوى بالكامل */
+    padding: 0 0 env(safe-area-inset-bottom, 24px) 0;
     display: flex;
     flex: 1;
     flex-direction: column;
@@ -44,8 +45,9 @@
   background: linear-gradient(135deg, rgba(99, 102, 241, 0.1) 0%, rgba(16, 185, 129, 0.1) 100%);
 }
 
+/* التعديل هنا: أضفنا 24px كاحتياط لو تأخر الأندرويد في الحساب */
 .safe-bottom {
-  padding-bottom: env(safe-area-inset-bottom);
+  padding-bottom: env(safe-area-inset-bottom, 24px);
 }
 
 /* Custom scrollbar */
