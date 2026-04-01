@@ -1,11 +1,14 @@
 import { CapacitorConfig } from '@capacitor/cli';
 
 const config: CapacitorConfig = {
-  // ... إعداداتك السابقة
+  appId: 'com.yourdomain.lawyerapp', // استبدله بمعرف التطبيق الخاص بك إذا كان مختلفاً
+  appName: 'المحامي محمد الكامل',
+  webDir: 'dist', // 🔴 هذا هو الحل لمشكلة GitHub! (استخدم 'dist' أو 'build' بناءً على مجلد المخرجات في مشروعك)
+  bundledWebRuntime: false,
   plugins: {
     Keyboard: {
-      resize: 'none', // هذا الأمر يمنع تدمير الشاشة ويجعل الكيبورد يطفو فوقها
-      style: 'dark' // اختياري: لجعل الكيبورد يتناسب مع تطبيقك الداكن
+      resize: 'none', // يمنع تدمير الشاشة ويجعل الكيبورد يطفو فوقها
+      style: 'dark'   // يجعل الكيبورد يتناسب مع التطبيق الداكن
     }
   }
 };
