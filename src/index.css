@@ -6,7 +6,7 @@
   --color-secondary: #10b981;
   --color-accent: #f59e0b;
   --color-danger: #ef4444;
-  --color-bg: #0a0a0f;
+  --color-bg: #0a0a0f; /* هذا هو لونك الداكن */
   --color-card: #15151e;
   --color-border: #262635;
 }
@@ -17,8 +17,7 @@
     min-height: 100dvh;
     background-color: var(--color-bg);
     margin: 0;
-    /* التعديل هنا: أضفنا المساحة السفلية للأزرار لترفع المحتوى بالكامل */
-    padding: 0 0 env(safe-area-inset-bottom, 24px) 0;
+    padding: 0; /* التعديل هنا: أزلنا الـ padding من هنا لكي لا يتشوه التصميم مع الكيبورد */
     display: flex;
     flex: 1;
     flex-direction: column;
@@ -33,9 +32,11 @@
   }
   
   input, select, textarea, button {
-    @apply min-h-[44px]; /* Minimum touch target size */
+    @apply min-h-[44px]; 
   }
 }
+
+/* ... باقي الكود الخاص بك يبقى كما هو بدون تغيير ... */
 
 .glass {
   @apply bg-white/5 backdrop-blur-md border border-white/10;
