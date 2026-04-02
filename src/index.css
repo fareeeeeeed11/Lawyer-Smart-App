@@ -48,7 +48,7 @@
 
 /* التعديل هنا: أضفنا 24px كاحتياط لو تأخر الأندرويد في الحساب */
 .safe-bottom {
-  padding-bottom: env(safe-area-inset-bottom, 24px);
+  padding-bottom: env(safe-area-inset-bottom, 0px); /* غيرنا 24px إلى 0px */
 }
 
 /* Custom scrollbar */
