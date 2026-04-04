@@ -2338,17 +2338,14 @@ ${clientsContext}`;
       </AnimatePresence>
 
       {/* Mobile Bottom Nav */}
-      <div 
-        className="md:hidden fixed bottom-0 left-0 right-0 bg-card/95 backdrop-blur-xl border-t border-border px-4 flex justify-between items-center z-[100]"
-        style={{ height: '65px', paddingBottom: '0px', marginBottom: '0px' }}
-      >
-        <MobileNavItem icon={<LayoutDashboard size={20} />} active={activeTab === 'dashboard'} onClick={() => setActiveTab('dashboard')} />
-        <MobileNavItem icon={<Briefcase size={20} />} active={activeTab === 'cases'} onClick={() => setActiveTab('cases')} />
-        <MobileNavItem icon={<Receipt size={20} />} active={activeTab === 'statements'} onClick={() => setActiveTab('statements')} />
-        <MobileNavItem icon={<Bot size={20} />} active={activeTab === 'ai'} onClick={() => setActiveTab('ai')} />
-        <MobileNavItem icon={<Calendar size={20} />} active={activeTab === 'calendar'} onClick={() => setActiveTab('calendar')} />
-        <MobileNavItem icon={<User size={20} />} active={activeTab === 'profile'} onClick={() => setActiveTab('profile')} />
-        <MobileNavItem icon={<Users size={20} />} active={activeTab === 'clients'} onClick={() => setActiveTab('clients')} />
+      <div className="md:hidden fixed bottom-0 left-0 right-0 w-full bg-[#15151e] border-t border-border px-4 h-[56px] flex justify-between items-center z-[200]">
+        <MobileNavItem icon={<LayoutDashboard size={22} />} active={activeTab === 'dashboard'} onClick={() => setActiveTab('dashboard')} />
+        <MobileNavItem icon={<Briefcase size={22} />} active={activeTab === 'cases'} onClick={() => setActiveTab('cases')} />
+        <MobileNavItem icon={<Receipt size={22} />} active={activeTab === 'statements'} onClick={() => setActiveTab('statements')} />
+        <MobileNavItem icon={<Bot size={22} />} active={activeTab === 'ai'} onClick={() => setActiveTab('ai')} />
+        <MobileNavItem icon={<Calendar size={22} />} active={activeTab === 'calendar'} onClick={() => setActiveTab('calendar')} />
+        <MobileNavItem icon={<User size={22} />} active={activeTab === 'profile'} onClick={() => setActiveTab('profile')} />
+        <MobileNavItem icon={<Users size={22} />} active={activeTab === 'clients'} onClick={() => setActiveTab('clients')} />
       </div>
     </div>
   );
