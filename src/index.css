@@ -47,9 +47,13 @@
 }
 
 /* التعديل هنا: أضفنا 24px كاحتياط لو تأخر الأندرويد في الحساب */
+/* هذه الأكواد الذكية تأخذ مسافة الهاتف الحقيقية، وتضمن عدم حدوث أي تداخل */
+.safe-top {
+  padding-top: max(12px, env(safe-area-inset-top, 0px)) !important;
+}
+
 .safe-bottom {
-  padding-bottom: 0px !important;
-  margin-bottom: 0px !important;
+  padding-bottom: max(12px, env(safe-area-inset-bottom, 0px)) !important;
 }
 
 /* Custom scrollbar */

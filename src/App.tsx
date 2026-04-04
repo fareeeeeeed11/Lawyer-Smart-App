@@ -1629,7 +1629,7 @@ ${clientsContext}`;
       </AnimatePresence>
 
       {/* Mobile Top Header (Resolves missing Settings in bottom nav) */}
-      <div className="md:hidden sticky top-0 bg-card/80 backdrop-blur-md border-b border-border z-40 px-4 py-3 flex items-center justify-between">
+      <div className="md:hidden sticky top-0 bg-card/80 backdrop-blur-md border-b border-border z-40 px-4 pb-3 safe-top flex items-center justify-between">
         <div className="flex items-center gap-3">
           <div className="w-10 h-10 bg-primary/20 rounded-full flex items-center justify-center text-primary">
             <Scale size={20} />
@@ -2338,7 +2338,7 @@ ${clientsContext}`;
       </AnimatePresence>
 
       {/* Mobile Bottom Nav */}
-      <div className="md:hidden fixed bottom-0 left-0 right-0 bg-card/80 backdrop-blur-xl border-t border-border px-4 py-3 flex justify-between items-center z-40 safe-bottom hide-on-keyboard">
+      <div className="md:hidden fixed bottom-0 left-0 right-0 bg-card/80 backdrop-blur-xl border-t border-border px-4 pt-3 safe-bottom flex justify-between items-center z-40 hide-on-keyboard">
         <MobileNavItem icon={<LayoutDashboard size={20} />} active={activeTab === 'dashboard'} onClick={() => setActiveTab('dashboard')} />
         <MobileNavItem icon={<Briefcase size={20} />} active={activeTab === 'cases'} onClick={() => setActiveTab('cases')} />
         <MobileNavItem icon={<Receipt size={20} />} active={activeTab === 'statements'} onClick={() => setActiveTab('statements')} />
