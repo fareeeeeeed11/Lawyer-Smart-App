@@ -1,4 +1,5 @@
 @import "tailwindcss";
+/* Trigger UI Update */
 
 @theme {
   --font-sans: "Inter", "Cairo", ui-sans-serif, system-ui, sans-serif;
