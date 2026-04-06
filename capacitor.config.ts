@@ -1,7 +1,7 @@
 import { CapacitorConfig } from '@capacitor/cli';
 
 const config: CapacitorConfig = {
-  appId: 'com.yourdomain.lawyerapp', // تأكد أن هذا نفس المعرف الخاص بتطبيقك
+  appId: 'com.muhammad.lawyerapp', // تم التعديل لمعرف التطبيق الصحيح الخاص بك لكي لا تفشل عملية البناء
   appName: 'المحامي محمد الكامل',
   webDir: 'dist', // خليناها dist عشان GitHub Actions يبني صح
   

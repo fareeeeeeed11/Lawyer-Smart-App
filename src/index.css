@@ -1,5 +1,4 @@
 @import "tailwindcss";
-/* Trigger UI Update */
 
 @theme {
   --font-sans: "Inter", "Cairo", ui-sans-serif, system-ui, sans-serif;
@@ -7,7 +6,7 @@
   --color-secondary: #10b981;
   --color-accent: #f59e0b;
   --color-danger: #ef4444;
-  --color-bg: #0a0a0f; /* هذا هو لونك الداكن */
+  --color-bg: #0a0a0f;
   --color-card: #15151e;
   --color-border: #262635;
 }
@@ -18,7 +17,7 @@
     min-height: 100dvh;
     background-color: var(--color-bg);
     margin: 0;
-    padding: 0; /* التعديل هنا: أزلنا الـ padding من هنا لكي لا يتشوه التصميم مع الكيبورد */
+    padding: 0;
     display: flex;
     flex: 1;
     flex-direction: column;
@@ -33,27 +32,25 @@
   }
   
   input, select, textarea, button {
-    @apply min-h-[44px]; 
+    @apply min-h-[44px]; /* Minimum touch target size */
   }
 }
 
-/* ... باقي الكود الخاص بك يبقى كما هو بدون تغيير ... */
-
 .glass {
-  @apply bg-white/5 backdrop-blur-md border border-white/10;
+  @apply bg-white/5 backdrop-blur-xl border border-white/10;
 }
 
 .card-gradient {
   background: linear-gradient(135deg, rgba(99, 102, 241, 0.1) 0%, rgba(16, 185, 129, 0.1) 100%);
 }
 
-/* التعديل هنا: أضفنا 24px كاحتياط لو تأخر الأندرويد في الحساب */
-/* هذه الأكواد الذكية تأخذ مسافة الهاتف الحقيقية، وتضمن عدم حدوث أي تداخل */
+.safe-bottom {
+  padding-bottom: max(16px, env(safe-area-inset-bottom, 0px));
+}
+
 .safe-top {
   padding-top: max(12px, env(safe-area-inset-top, 0px)) !important;
 }
-
-
 
 /* Custom scrollbar */
 ::-webkit-scrollbar {

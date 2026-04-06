@@ -264,6 +264,18 @@ export default function App() {
       setLoginError('');
     }, 800);
   };
+
+  const [isKeyboardOpen, setIsKeyboardOpen] = useState(false);
+
+  useEffect(() => {
+    if (!window.visualViewport) return;
+    const handleResize = () => {
+      setIsKeyboardOpen(window.visualViewport.height < window.innerHeight * 0.85);
+    };
+    window.visualViewport.addEventListener('resize', handleResize);
+    return () => window.visualViewport.removeEventListener('resize', handleResize);
+  }, []);
+
   const [activeTab, setActiveTab] = useState('dashboard');
   const [clients, setClients] = useState<Client[]>(() => {
     const saved = localStorage.getItem('lawyer_clients');
@@ -1653,9 +1665,12 @@ ${clientsContext}`;
 
       <Sidebar activeTab={activeTab} setActiveTab={setActiveTab} handleLogout={handleLogout} />
       
-      <main className="md:pr-64 p-4 md:p-6 min-h-[100dvh] pb-32">
-        <div className="max-w-7xl mx-auto">
-          <div className="flex justify-end mb-4">
+      <main className={cn(
+        "md:pr-64 p-4 md:p-6 min-h-[100dvh] transition-all duration-300 flex flex-col",
+        isKeyboardOpen ? "pb-4" : "pb-24"
+      )}>
+        <div className="max-w-7xl mx-auto w-full flex-1 flex flex-col">
+          <div className="flex justify-end mb-4 shrink-0">
             <SoundStatus />
           </div>
           {activeTab === 'dashboard' && (
@@ -2342,7 +2357,12 @@ ${clientsContext}`;
       </AnimatePresence>
 
       {/* Mobile Bottom Nav */}
-      <div className="md:hidden fixed bottom-0 left-0 right-0 w-full bg-[#15151e] border-t border-border z-[200] px-4 h-[50px] pb-1 pt-2 flex justify-between items-start">
+      <div 
+        className={cn(
+          "md:hidden fixed bottom-0 left-0 right-0 w-full bg-[#15151e] border-t border-border z-[200] px-4 flex justify-between items-center shadow-[0_-4px_20px_rgba(0,0,0,0.3)] transition-transform duration-300",
+          isKeyboardOpen ? "translate-y-full" : "translate-y-0 h-16 pb-0"
+        )}
+      >
         <MobileNavItem icon={<LayoutDashboard size={22} />} active={activeTab === 'dashboard'} onClick={() => setActiveTab('dashboard')} />
         <MobileNavItem icon={<Briefcase size={22} />} active={activeTab === 'cases'} onClick={() => setActiveTab('cases')} />
         <MobileNavItem icon={<Receipt size={22} />} active={activeTab === 'statements'} onClick={() => setActiveTab('statements')} />
@@ -3145,7 +3165,7 @@ const AIView = ({ messages, input, setInput, handleSendMessage, isTyping }: {
   }, [messages, isTyping]);
 
   return (
-    <div className="h-[calc(100vh-180px)] md:h-[calc(100vh-120px)] flex flex-col bg-card border border-border rounded-2xl md:rounded-3xl overflow-hidden animate-in fade-in duration-500 shadow-2xl relative">
+    <div className="flex-1 min-h-[50vh] flex flex-col bg-card border border-border rounded-2xl md:rounded-3xl overflow-hidden animate-in fade-in duration-500 shadow-2xl relative">
       {/* Persistent Header */}
       <header className="p-4 md:p-6 border-b border-border bg-white/5 backdrop-blur-md flex items-center justify-between sticky top-0 z-20">
         <div className="flex items-center gap-3 md:gap-4">
