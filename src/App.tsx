@@ -653,6 +653,11 @@ export default function App() {
       alarmAudioRef.current.volume = 0.01;
       alarmAudioRef.current.play().catch(e => console.log('Background resume failed:', e));
     }
+
+    // Stop synthesized backup alarm if active
+    if (audioContextRef.current && audioContextRef.current.state === 'running') {
+      audioContextRef.current.suspend();
+    }
     
     // Release Wake Lock
     if (wakeLock) {
@@ -827,13 +832,10 @@ export default function App() {
         }
         
         alarmAudioRef.current.play().catch(e => {
-          console.log('Audio play failed', e);
-          // Fallback to synthesized alarm if standard audio fails or as an additional measure
+          console.log('Audio play failed, playing synthesized backup', e);
+          // ONLY play fallback if main audio fails to play
           playSynthesizedAlarm();
         });
-        
-        // Always play synthesized alarm for APK/Offline reliability
-        playSynthesizedAlarm();
       }
 
       // Task Due Date Notifications
@@ -1670,10 +1672,11 @@ ${clientsContext}`;
       interval = setInterval(() => {
         // Force the main audio element to keep playing if it paused for any reason
         if (alarmAudioRef.current && alarmAudioRef.current.paused) {
-          alarmAudioRef.current.play().catch(e => console.log('Continuous loop play failed', e));
+          alarmAudioRef.current.play().catch(e => {
+            console.log('Continuous loop play failed, using fallback', e);
+            playSynthesizedAlarm();
+          });
         }
-        // Retrigger the synthesized alarm sequence
-        playSynthesizedAlarm();
       }, 5000); // Repeat every 5 seconds
     }
     return () => {
