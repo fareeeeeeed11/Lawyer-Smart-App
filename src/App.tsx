@@ -1045,8 +1045,6 @@ export default function App() {
         setIsTyping(false);
         return;
       }
-      const ai = new GoogleGenAI({ apiKey });
-      
       // Prepare context about cases and clients
       const casesContext = cases.map(c => `- قضية رقم ${c.caseNumber}: ${c.title} (الموكل: ${c.clientName}, الحالة: ${c.status}, المحكمة: ${c.court})`).join('\n');
       const clientsContext = clients.map(cl => `- العميل: ${cl.name} (هاتف: ${cl.phone})`).join('\n');
@@ -1063,14 +1061,31 @@ ${casesContext}
 العملاء الحاليون:
 ${clientsContext}`;
 
-      const response = await ai.models.generateContent({
-        model: "gemini-1.5-flash-latest",
-        contents: input,
-        config: {
-          systemInstruction: systemInstruction
-        }
+      const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          system_instruction: {
+            parts: [{ text: systemInstruction }]
+          },
+          contents: [
+            {
+              parts: [{ text: input }]
+            }
+          ]
+        })
       });
-      const modelMsg: Message = { role: 'model', text: response.text || 'عذراً، حدث خطأ في معالجة طلبك.' };
+
+      if (!response.ok) {
+        const errText = await response.text();
+        throw new Error(`API Error: ${response.status} ${errText}`);
+      }
+      
+      const data = await response.json();
+      const responseText = data.candidates?.[0]?.content?.parts?.[0]?.text || 'عذراً، حدث خطأ في معالجة طلبك.';
+      const modelMsg: Message = { role: 'model', text: responseText };
       setMessages(prev => [...prev, modelMsg]);
     } catch (error) {
       console.error(error);
@@ -1570,6 +1585,24 @@ ${clientsContext}`;
     };
   }, [isAlarmActive]);
 
+  // Continuous Alarm Loop to ensure repeating until dismissed
+  useEffect(() => {
+    let interval: ReturnType<typeof setInterval>;
+    if (isAlarmActive) {
+      interval = setInterval(() => {
+        // Force the main audio element to keep playing if it paused for any reason
+        if (alarmAudioRef.current && alarmAudioRef.current.paused) {
+          alarmAudioRef.current.play().catch(e => console.log('Continuous loop play failed', e));
+        }
+        // Retrigger the synthesized alarm sequence
+        playSynthesizedAlarm();
+      }, 5000); // Repeat every 5 seconds
+    }
+    return () => {
+      if (interval) clearInterval(interval);
+    };
+  }, [isAlarmActive, playSynthesizedAlarm]);
+
   if (!isLoggedIn) {
     return (
       <div className="min-h-[100dvh] bg-bg flex flex-col p-4 overflow-y-auto">
@@ -1789,6 +1822,7 @@ ${clientsContext}`;
               setInput={setInput} 
               handleSendMessage={handleSendMessage} 
               isTyping={isTyping} 
+              isKeyboardOpen={isKeyboardOpen}
             />
           )}
           {activeTab === 'clients' && (
@@ -3070,10 +3104,7 @@ const Dashboard = ({ cases, clients, sessions }: {
             className="bg-card border border-border rounded-xl pr-10 pl-4 py-2.5 w-full lg:w-64 focus:outline-none focus:border-primary transition-colors"
           />
         </div>
-        <button className="p-2.5 bg-card border border-border rounded-xl hover:bg-white/5 transition-colors relative shrink-0">
-          <Bell size={20} />
-          <span className="absolute top-2 right-2 w-2 h-2 bg-danger rounded-full border-2 border-card"></span>
-        </button>
+
       </div>
     </header>
 
@@ -3238,12 +3269,13 @@ const DetailCard = ({ label, value, icon, color }: { label: string, value: strin
   </div>
 );
 
-const AIView = ({ messages, input, setInput, handleSendMessage, isTyping }: { 
+const AIView = ({ messages, input, setInput, handleSendMessage, isTyping, isKeyboardOpen }: { 
   messages: Message[], 
   input: string, 
   setInput: (val: string) => void, 
   handleSendMessage: () => void, 
-  isTyping: boolean 
+  isTyping: boolean,
+  isKeyboardOpen?: boolean
 }) => {
   const scrollRef = useRef<HTMLDivElement>(null);
 
@@ -3387,6 +3419,7 @@ const AIView = ({ messages, input, setInput, handleSendMessage, isTyping }: {
         <p className="text-[10px] text-center text-white/20 mt-3">
           المستشار الذكي قد يخطئ، يرجى مراجعة الاستشارات الهامة.
         </p>
+        <div className={cn("w-full transition-all duration-300 pointer-events-none md:hidden", isKeyboardOpen ? "h-[45vh]" : "h-0")} />
       </div>
     </div>
   );
