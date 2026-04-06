@@ -548,12 +548,21 @@ export default function App() {
   }, [triggeredTasks]);
 
   useEffect(() => {
-    localStorage.setItem('lawyer_selected_sound', selectedSound);
+    try {
+      localStorage.setItem('lawyer_selected_sound', selectedSound);
+    } catch (e) {
+      console.warn('Could not save selected sound to localStorage:', e);
+    }
   }, [selectedSound]);
 
   useEffect(() => {
     if (customSound) {
-      localStorage.setItem('lawyer_custom_sound', customSound);
+      try {
+        localStorage.setItem('lawyer_custom_sound', customSound);
+      } catch (e) {
+        console.error('LocalStorage quota exceeded for custom sound:', e);
+        alert('حدث خطأ: مساحة تخزين المتصفح ممتلئة. النغمة المخصصة كبيرة جداً ولن يتم حفظها لمرات الدخول القادمة.');
+      }
     } else {
       localStorage.removeItem('lawyer_custom_sound');
     }
@@ -808,15 +817,19 @@ export default function App() {
   const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
-      if (file.size > 5 * 1024 * 1024) { // 5MB limit for localStorage
-        alert("حجم الملف كبير جداً. يرجى اختيار ملف أقل من 5 ميجابايت.");
+      if (file.size > 1.5 * 1024 * 1024) { // 1.5MB limit for localStorage safety
+        alert("حجم الملف كبير جداً! تجنباً لانهيار النظام (الشاشة الزرقاء)، يرجى اختيار ملف نغمة أصغر من 1.5 ميجابايت.");
         return;
       }
       const reader = new FileReader();
       reader.onload = (event) => {
-        const base64 = event.target?.result as string;
-        setCustomSound(base64);
-        setSelectedSound(base64);
+        try {
+          const base64 = event.target?.result as string;
+          setCustomSound(base64);
+          setSelectedSound(base64);
+        } catch (error) {
+          alert("فشلت عملية رفع النغمة.");
+        }
       };
       reader.readAsDataURL(file);
     }
@@ -2134,7 +2147,7 @@ ${clientsContext}`;
                         <div className="flex flex-col items-center justify-center pt-5 pb-6">
                           <Upload className="w-8 h-8 mb-3 text-white/30" />
                           <p className="mb-2 text-sm text-white/50">اضغط لرفع ملف صوتي</p>
-                          <p className="text-xs text-white/30">MP3, WAV (بحد أقصى 5MB)</p>
+                          <p className="text-xs text-white/30">MP3, WAV (بحد أقصى 1.5MB)</p>
                         </div>
                         <input type="file" className="hidden" accept="audio/*" onChange={handleFileUpload} />
                       </label>
