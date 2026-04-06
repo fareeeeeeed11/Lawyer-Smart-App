@@ -1629,22 +1629,27 @@ ${clientsContext}`;
       </AnimatePresence>
 
       {/* Mobile Top Header (Resolves missing Settings in bottom nav) */}
-      <div className="md:hidden sticky top-0 bg-card/80 backdrop-blur-md border-b border-border z-40 px-4 py-4 flex items-center justify-between">
-        <div className="flex items-center gap-3">
-          <div className="w-10 h-10 bg-primary/20 rounded-full flex items-center justify-center text-primary">
-            <Scale size={20} />
+      <div 
+        className="md:hidden sticky top-0 bg-card/80 backdrop-blur-md border-b border-border z-40 px-4" 
+        style={{ paddingTop: 'calc(1rem + env(safe-area-inset-top))', paddingBottom: '1rem' }}
+      >
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 bg-primary/20 rounded-full flex items-center justify-center text-primary">
+              <Scale size={20} />
+            </div>
+            <div>
+              <h1 className="font-bold text-sm truncate w-40">{lawyerProfile?.name || 'المحامي'}</h1>
+              <p className="text-[10px] text-white/50">النظام الذكي</p>
+            </div>
           </div>
-          <div>
-            <h1 className="font-bold text-sm truncate w-40">{lawyerProfile?.name || 'المحامي'}</h1>
-            <p className="text-[10px] text-white/50">النظام الذكي</p>
-          </div>
+          <button 
+            onClick={() => setActiveTab('settings')}
+            className={`p-2 rounded-xl transition-all ${activeTab === 'settings' ? 'bg-primary text-white' : 'bg-white/5 text-white/50 hover:bg-white/10 hover:text-white'}`}
+          >
+            <Settings size={20} />
+          </button>
         </div>
-        <button 
-          onClick={() => setActiveTab('settings')}
-          className={`p-2 rounded-xl transition-all ${activeTab === 'settings' ? 'bg-primary text-white' : 'bg-white/5 text-white/50 hover:bg-white/10 hover:text-white'}`}
-        >
-          <Settings size={20} />
-        </button>
       </div>
 
       <Sidebar activeTab={activeTab} setActiveTab={setActiveTab} handleLogout={handleLogout} />
@@ -2338,14 +2343,19 @@ ${clientsContext}`;
       </AnimatePresence>
 
       {/* Mobile Bottom Nav */}
-      <div className="md:hidden fixed bottom-0 left-0 right-0 w-full bg-[#15151e] border-t border-border px-4 h-[56px] flex justify-between items-center z-[200]">
-        <MobileNavItem icon={<LayoutDashboard size={22} />} active={activeTab === 'dashboard'} onClick={() => setActiveTab('dashboard')} />
-        <MobileNavItem icon={<Briefcase size={22} />} active={activeTab === 'cases'} onClick={() => setActiveTab('cases')} />
-        <MobileNavItem icon={<Receipt size={22} />} active={activeTab === 'statements'} onClick={() => setActiveTab('statements')} />
-        <MobileNavItem icon={<Bot size={22} />} active={activeTab === 'ai'} onClick={() => setActiveTab('ai')} />
-        <MobileNavItem icon={<Calendar size={22} />} active={activeTab === 'calendar'} onClick={() => setActiveTab('calendar')} />
-        <MobileNavItem icon={<User size={22} />} active={activeTab === 'profile'} onClick={() => setActiveTab('profile')} />
-        <MobileNavItem icon={<Users size={22} />} active={activeTab === 'clients'} onClick={() => setActiveTab('clients')} />
+      <div 
+        className="md:hidden fixed bottom-0 left-0 right-0 w-full bg-[#15151e] border-t border-border z-[200]" 
+        style={{ paddingBottom: 'env(safe-area-inset-bottom)' }}
+      >
+        <div className="flex justify-between items-center px-4 h-[56px]">
+          <MobileNavItem icon={<LayoutDashboard size={22} />} active={activeTab === 'dashboard'} onClick={() => setActiveTab('dashboard')} />
+          <MobileNavItem icon={<Briefcase size={22} />} active={activeTab === 'cases'} onClick={() => setActiveTab('cases')} />
+          <MobileNavItem icon={<Receipt size={22} />} active={activeTab === 'statements'} onClick={() => setActiveTab('statements')} />
+          <MobileNavItem icon={<Bot size={22} />} active={activeTab === 'ai'} onClick={() => setActiveTab('ai')} />
+          <MobileNavItem icon={<Calendar size={22} />} active={activeTab === 'calendar'} onClick={() => setActiveTab('calendar')} />
+          <MobileNavItem icon={<User size={22} />} active={activeTab === 'profile'} onClick={() => setActiveTab('profile')} />
+          <MobileNavItem icon={<Users size={22} />} active={activeTab === 'clients'} onClick={() => setActiveTab('clients')} />
+        </div>
       </div>
     </div>
   );
