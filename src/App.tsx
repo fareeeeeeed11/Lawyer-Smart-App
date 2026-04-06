@@ -206,6 +206,60 @@ const PREDEFINED_SOUNDS = [
   { id: 'modern', name: 'نغمة حديثة (هادئة)', url: 'https://assets.mixkit.co/active_storage/sfx/2570/2570-preview.mp3' }
 ];
 
+// --- IndexedDB Storage for Large Files (Audio) ---
+const DB_NAME = 'LawyerAppDB';
+const STORE_NAME = 'audioStore';
+
+const initDB = (): Promise<IDBDatabase> => {
+  return new Promise((resolve, reject) => {
+    const request = indexedDB.open(DB_NAME, 1);
+    request.onupgradeneeded = (e: any) => {
+      e.target.result.createObjectStore(STORE_NAME);
+    };
+    request.onsuccess = (e: any) => resolve(e.target.result);
+    request.onerror = () => reject(request.error);
+  });
+};
+
+const saveAudioToDB = async (key: string, base64Str: string): Promise<boolean> => {
+  try {
+    const db = await initDB();
+    return new Promise((resolve, reject) => {
+      const tx = db.transaction(STORE_NAME, 'readwrite');
+      const store = tx.objectStore(STORE_NAME);
+      store.put(base64Str, key);
+      tx.oncomplete = () => resolve(true);
+      tx.onerror = () => reject(tx.error);
+    });
+  } catch(e) { console.error(e); return false; }
+};
+
+const getAudioFromDB = async (key: string): Promise<string | null> => {
+  try {
+    const db = await initDB();
+    return new Promise((resolve, reject) => {
+      const tx = db.transaction(STORE_NAME, 'readonly');
+      const store = tx.objectStore(STORE_NAME);
+      const req = store.get(key);
+      req.onsuccess = () => resolve(req.result || null);
+      req.onerror = () => reject(req.error);
+    });
+  } catch(e) { console.error(e); return null; }
+};
+
+const deleteAudioFromDB = async (key: string): Promise<boolean> => {
+  try {
+    const db = await initDB();
+    return new Promise((resolve, reject) => {
+      const tx = db.transaction(STORE_NAME, 'readwrite');
+      const store = tx.objectStore(STORE_NAME);
+      store.delete(key);
+      tx.oncomplete = () => resolve(true);
+      tx.onerror = () => reject(tx.error);
+    });
+  } catch(e) { console.error(e); return false; }
+};
+
 export default function App() {
   const [isLoggedIn, setIsLoggedIn] = useState(() => {
     return sessionStorage.getItem('lawyer_is_logged_in') === 'true';
@@ -352,17 +406,32 @@ export default function App() {
     const saved = localStorage.getItem('lawyer_triggered_tasks');
     return saved ? new Set(JSON.parse(saved)) : new Set();
   });
-  const [selectedSound, setSelectedSound] = useState(() => {
-    const saved = localStorage.getItem('lawyer_selected_sound');
-    // Sanitize: if it's an old pixabay URL that might be broken, reset to default
-    if (saved && saved.includes('pixabay.com') && !saved.includes('download')) {
-      return PREDEFINED_SOUNDS[0].url;
-    }
-    return saved || PREDEFINED_SOUNDS[0].url;
-  });
-  const [customSound, setCustomSound] = useState<string | null>(() => {
-    return localStorage.getItem('lawyer_custom_sound');
-  });
+  const [selectedSound, setSelectedSound] = useState<string>(PREDEFINED_SOUNDS[0].url);
+  const [customSound, setCustomSound] = useState<string | null>(null);
+
+  useEffect(() => {
+    const loadAudioFromDB = async () => {
+      const dbCustom = await getAudioFromDB('lawyer_custom_sound');
+      if (dbCustom) setCustomSound(dbCustom);
+
+      const savedSelection = localStorage.getItem('lawyer_selected_sound');
+      if (savedSelection === 'CUSTOM_DB') {
+        const dbSelected = await getAudioFromDB('lawyer_selected_sound');
+        if (dbSelected) {
+          setSelectedSound(dbSelected);
+        } else {
+          setSelectedSound(PREDEFINED_SOUNDS[0].url);
+        }
+      } else if (savedSelection) {
+        if (savedSelection.includes('pixabay.com') && !savedSelection.includes('download')) {
+          setSelectedSound(PREDEFINED_SOUNDS[0].url);
+        } else {
+          setSelectedSound(savedSelection);
+        }
+      }
+    };
+    loadAudioFromDB();
+  }, []);
   const [showFilters, setShowFilters] = useState(false);
   const [caseFilters, setCaseFilters] = useState({
     status: 'الكل',
@@ -548,23 +617,19 @@ export default function App() {
   }, [triggeredTasks]);
 
   useEffect(() => {
-    try {
+    if (selectedSound.length > 200) {
+      localStorage.setItem('lawyer_selected_sound', 'CUSTOM_DB');
+      saveAudioToDB('lawyer_selected_sound', selectedSound);
+    } else {
       localStorage.setItem('lawyer_selected_sound', selectedSound);
-    } catch (e) {
-      console.warn('Could not save selected sound to localStorage:', e);
     }
   }, [selectedSound]);
 
   useEffect(() => {
     if (customSound) {
-      try {
-        localStorage.setItem('lawyer_custom_sound', customSound);
-      } catch (e) {
-        console.error('LocalStorage quota exceeded for custom sound:', e);
-        alert('حدث خطأ: مساحة تخزين المتصفح ممتلئة. النغمة المخصصة كبيرة جداً ولن يتم حفظها لمرات الدخول القادمة.');
-      }
+      saveAudioToDB('lawyer_custom_sound', customSound);
     } else {
-      localStorage.removeItem('lawyer_custom_sound');
+      deleteAudioFromDB('lawyer_custom_sound');
     }
   }, [customSound]);
 
