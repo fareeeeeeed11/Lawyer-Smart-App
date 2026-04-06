@@ -66,6 +66,7 @@ import {
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { LocalNotifications } from '@capacitor/local-notifications';
+import { Keyboard } from '@capacitor/keyboard';
 import { format, parseISO, isToday, isPast, isFuture, addMinutes } from 'date-fns';
 import { ar } from 'date-fns/locale';
 import { 
@@ -268,12 +269,18 @@ export default function App() {
   const [isKeyboardOpen, setIsKeyboardOpen] = useState(false);
 
   useEffect(() => {
-    if (!window.visualViewport) return;
-    const handleResize = () => {
-      setIsKeyboardOpen(window.visualViewport.height < window.innerHeight * 0.85);
+    // استخدمنا مكتبة Capacitor الأصلية لكشف الكيبورد 100% بدقة
+    const showListener = Keyboard.addListener('keyboardWillShow', info => {
+      setIsKeyboardOpen(true);
+    });
+    const hideListener = Keyboard.addListener('keyboardWillHide', () => {
+      setIsKeyboardOpen(false);
+    });
+
+    return () => {
+      showListener.then(l => l.remove());
+      hideListener.then(l => l.remove());
     };
-    window.visualViewport.addEventListener('resize', handleResize);
-    return () => window.visualViewport.removeEventListener('resize', handleResize);
   }, []);
 
   const [activeTab, setActiveTab] = useState('dashboard');
@@ -1643,7 +1650,7 @@ ${clientsContext}`;
       </AnimatePresence>
 
       {/* Mobile Top Header */}
-      <div className="md:hidden sticky top-0 bg-card/80 backdrop-blur-md border-b border-border z-40 px-4 py-4">
+      <div className="md:hidden sticky top-0 bg-card/80 backdrop-blur-md border-b border-border z-40 px-4 pb-4 pt-10 safe-top">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 bg-primary/20 rounded-full flex items-center justify-center text-primary">
@@ -2325,6 +2332,9 @@ ${clientsContext}`;
               </div>
             </div>
           )}
+          
+          {/* شريط تمرير سحري يحمي محتواك من الاختفاء خلف الأزرار السفلية وشعارات الأندرويد */}
+          <div className="h-32 md:h-16 w-full shrink-0 opacity-0 pointer-events-none">فضاوة السحب النهائي</div>
         </div>
       </main>
 
