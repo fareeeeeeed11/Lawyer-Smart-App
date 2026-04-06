@@ -2342,7 +2342,7 @@ ${clientsContext}`;
       </AnimatePresence>
 
       {/* Mobile Bottom Nav */}
-      <div className="md:hidden fixed bottom-0 left-0 right-0 w-full bg-[#15151e] border-t border-border z-[200] px-4 h-[56px] flex justify-between items-center">
+      <div className="md:hidden fixed bottom-0 left-0 right-0 w-full bg-[#15151e] border-t border-border z-[200] px-4 h-[50px] pb-1 pt-2 flex justify-between items-start">
         <MobileNavItem icon={<LayoutDashboard size={22} />} active={activeTab === 'dashboard'} onClick={() => setActiveTab('dashboard')} />
         <MobileNavItem icon={<Briefcase size={22} />} active={activeTab === 'cases'} onClick={() => setActiveTab('cases')} />
         <MobileNavItem icon={<Receipt size={22} />} active={activeTab === 'statements'} onClick={() => setActiveTab('statements')} />
@@ -3245,19 +3245,20 @@ const AIView = ({ messages, input, setInput, handleSendMessage, isTyping }: {
       <div className="p-4 md:p-6 border-t border-border bg-card/50 backdrop-blur-xl sticky bottom-0 z-20">
         <div className="flex gap-2 md:gap-3 items-end max-w-4xl mx-auto">
           <div className="flex-1 relative group">
-            <textarea 
-              rows={1}
-              value={input}
-              onChange={(e) => setInput(e.target.value)}
-              onKeyDown={(e) => {
-                if (e.key === 'Enter' && !e.shiftKey) {
-                  e.preventDefault();
-                  handleSendMessage();
-                }
-              }}
-              placeholder="اكتب استشارتك هنا..."
-              className="w-full bg-bg border border-border rounded-2xl px-4 py-3 md:py-4 text-sm focus:outline-none focus:border-primary transition-all resize-none max-h-32 hide-scrollbar group-hover:border-white/20"
-            />
+              <textarea 
+                rows={1}
+                value={input}
+                onChange={(e) => setInput(e.target.value)}
+                onFocus={(e) => setTimeout(() => e.target.scrollIntoView({ behavior: 'smooth', block: 'center' }), 300)}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter' && !e.shiftKey) {
+                    e.preventDefault();
+                    handleSendMessage();
+                  }
+                }}
+                placeholder="اكتب استشارتك هنا..."
+                className="w-full bg-bg border border-border rounded-2xl px-4 py-3 md:py-4 text-sm focus:outline-none focus:border-primary transition-all resize-none max-h-32 hide-scrollbar group-hover:border-white/20"
+              />
             <div className="absolute left-3 bottom-3 flex items-center gap-2">
               <button className="p-1.5 text-white/20 hover:text-white/60 transition-colors">
                 <Clock size={16} />
