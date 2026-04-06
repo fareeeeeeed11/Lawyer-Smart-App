@@ -817,8 +817,8 @@ export default function App() {
   const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
-      if (file.size > 1.5 * 1024 * 1024) { // 1.5MB limit for localStorage safety
-        alert("حجم الملف كبير جداً! تجنباً لانهيار النظام (الشاشة الزرقاء)، يرجى اختيار ملف نغمة أصغر من 1.5 ميجابايت.");
+      if (file.size > 5 * 1024 * 1024) { // 5MB limit
+        alert("حجم الملف كبير جداً. يرجى اختيار ملف أقل من 5 ميجابايت.");
         return;
       }
       const reader = new FileReader();
@@ -2147,7 +2147,7 @@ ${clientsContext}`;
                         <div className="flex flex-col items-center justify-center pt-5 pb-6">
                           <Upload className="w-8 h-8 mb-3 text-white/30" />
                           <p className="mb-2 text-sm text-white/50">اضغط لرفع ملف صوتي</p>
-                          <p className="text-xs text-white/30">MP3, WAV (بحد أقصى 1.5MB)</p>
+                          <p className="text-xs text-white/30">MP3, WAV (بحد أقصى 5MB)</p>
                         </div>
                         <input type="file" className="hidden" accept="audio/*" onChange={handleFileUpload} />
                       </label>
