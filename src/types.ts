@@ -81,4 +81,13 @@ export interface LawyerProfile {
   experience: string;
   bio: string;
   profilePicture?: string;
+  stats?: {
+    casesCount: string;
+    successRate: string;
+    years: string;
+    wonCases: string;
+    activeCases: string;
+    hoursLogged: string;
+    clientSatisfaction: string;
+  };
 }

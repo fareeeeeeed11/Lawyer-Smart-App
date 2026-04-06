@@ -320,11 +320,30 @@ export default function App() {
   const [editingClient, setEditingClient] = useState<Client | null>(null);
   const [editingCase, setEditingCase] = useState<Case | null>(null);
   const [editingSession, setEditingSession] = useState<Session | null>(null);
+  const [showNotificationsBox, setShowNotificationsBox] = useState(false);
 
   const [selectedCase, setSelectedCase] = useState<Case | null>(null);
   const [alarmSession, setAlarmSession] = useState<Session | null>(null);
   const [isAlarmActive, setIsAlarmActive] = useState(false);
   const [wakeLock, setWakeLock] = useState<any>(null);
+
+  const notificationsList = useMemo(() => {
+    const list: any[] = [];
+    const todayStr = format(new Date(), 'yyyy-MM-dd');
+    cases.forEach(c => {
+      (c.tasks || []).forEach(t => {
+        if (!t.isCompleted) {
+          list.push({ type: 'task', id: t.id, title: t.title, subtitle: `قضية: ${c.title}`, date: t.dueDate });
+        }
+      });
+    });
+    sessions.forEach(s => {
+      if (s.date <= todayStr) {
+        list.push({ type: 'session', id: s.id, title: s.description || 'موعد جلسة', subtitle: `قضية: ${s.caseTitle}`, date: s.date });
+      }
+    });
+    return list.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+  }, [cases, sessions]);
   const [triggeredSessions, setTriggeredSessions] = useState<Set<string>>(() => {
     const saved = localStorage.getItem('lawyer_triggered_sessions');
     return saved ? new Set(JSON.parse(saved)) : new Set();
@@ -391,7 +410,16 @@ export default function App() {
       specialization: 'القانون الجنائي والمدني',
       experience: 'أكثر من 10 سنوات في المحاماة والقضاء',
       bio: 'محامي متخصص في القضايا الجنائية والمدنية، أسعى دائماً لتحقيق العدالة وتقديم أفضل الاستشارات القانونية لعملائي.',
-      profilePicture: 'https://picsum.photos/seed/lawyer/200/200'
+      profilePicture: 'https://picsum.photos/seed/lawyer/200/200',
+      stats: {
+        casesCount: '124',
+        successRate: '98%',
+        years: '10+',
+        wonCases: '92',
+        activeCases: '18',
+        hoursLogged: '1,240',
+        clientSatisfaction: '4.9/5'
+      }
     };
   });
 
@@ -481,13 +509,20 @@ export default function App() {
   };
 
   // AI Consultant State
-  const [messages, setMessages] = useState<Message[]>([
-    { role: 'model', text: 'أهلاً بك يا سيادة المحامي محمد الكامل. أنا مساعدك القانوني الذكي، بروفيسور في القضاء وجميع أنواع القوانين. كيف يمكنني مساعدتك اليوم في استشاراتك القانونية؟' }
-  ]);
+  const [messages, setMessages] = useState<Message[]>(() => {
+    const saved = localStorage.getItem('lawyer_ai_messages');
+    return saved ? JSON.parse(saved) : [
+      { role: 'model', text: 'أهلاً بك يا سيادة المحامي محمد الكامل. أنا مساعدك القانوني الذكي، بروفيسور في القضاء وجميع أنواع القوانين. كيف يمكنني مساعدتك اليوم في استشاراتك القانونية؟' }
+    ];
+  });
   const [input, setInput] = useState('');
   const [isTyping, setIsTyping] = useState(false);
 
   // Persistence Logic
+  useEffect(() => {
+    localStorage.setItem('lawyer_ai_messages', JSON.stringify(messages));
+  }, [messages]);
+
   useEffect(() => {
     localStorage.setItem('lawyer_clients', JSON.stringify(clients));
   }, [clients]);
@@ -773,8 +808,8 @@ export default function App() {
   const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
-      if (file.size > 2 * 1024 * 1024) { // 2MB limit for localStorage
-        alert("حجم الملف كبير جداً. يرجى اختيار ملف أقل من 2 ميجابايت.");
+      if (file.size > 5 * 1024 * 1024) { // 5MB limit for localStorage
+        alert("حجم الملف كبير جداً. يرجى اختيار ملف أقل من 5 ميجابايت.");
         return;
       }
       const reader = new FileReader();
@@ -1001,8 +1036,11 @@ export default function App() {
     setIsTyping(true);
 
     try {
-      const apiKey = import.meta.env.VITE_GEMINI_API_KEY;
-      if (!apiKey || apiKey === 'undefined') {
+      let apiKey = import.meta.env.VITE_GEMINI_API_KEY;
+      if (!apiKey || apiKey === 'undefined' || String(apiKey).trim() === '') {
+        apiKey = 'AIzaSyAtLXEeuhOeG56teROePQIiV9aL6D-DhLo';
+      }
+      if (!apiKey) {
         setMessages(prev => [...prev, { role: 'model', text: 'عذراً، لم يتم ضبط مفتاح الذكاء الاصطناعي (API KEY). يرجى ضبطه في الإعدادات لتفعيل المستشار الذكي.' }]);
         setIsTyping(false);
         return;
@@ -1026,7 +1064,7 @@ ${casesContext}
 ${clientsContext}`;
 
       const response = await ai.models.generateContent({
-        model: "gemini-3-flash-preview",
+        model: "gemini-1.5-flash-latest",
         contents: input,
         config: {
           systemInstruction: systemInstruction
@@ -1080,6 +1118,7 @@ ${clientsContext}`;
               <input type="email" value={formData.email} onChange={e => setFormData({ ...formData, email: e.target.value })} className="w-full bg-bg border border-border rounded-xl px-4 py-2.5 focus:border-primary focus:outline-none" />
             </div>
             <button onClick={() => onSave(client ? { ...client, ...formData } : formData)} className="w-full bg-primary py-3 rounded-xl font-bold shadow-lg shadow-primary/20 hover:bg-primary/90 transition-all">حفظ البيانات</button>
+            <div className={cn("w-full transition-all duration-300 pointer-events-none md:hidden", isKeyboardOpen ? "h-[45vh]" : "h-0")} />
           </div>
         </motion.div>
       </div>
@@ -1179,6 +1218,7 @@ ${clientsContext}`;
             >
               حفظ الجلسة
             </button>
+            <div className={cn("w-full transition-all duration-300 pointer-events-none md:hidden", isKeyboardOpen ? "h-[45vh]" : "h-0")} />
           </div>
         </motion.div>
       </div>
@@ -1331,6 +1371,7 @@ ${clientsContext}`;
               <span className="font-bold text-danger">{(Number(formData.totalFees) || 0) - (Number(formData.paidFees) || 0)} ريال</span>
             </div>
             <button onClick={handleSubmit} className="w-full bg-primary py-3 rounded-xl font-bold mt-4 shadow-lg shadow-primary/20 hover:bg-primary/90 transition-all">حفظ البيانات</button>
+            <div className={cn("w-full transition-all duration-300 pointer-events-none md:hidden", isKeyboardOpen ? "h-[45vh]" : "h-0")} />
           </div>
         </motion.div>
       </div>
@@ -1339,47 +1380,34 @@ ${clientsContext}`;
 
   const AlarmModal = () => (
     <div className="fixed inset-0 z-[200] flex items-center justify-center p-4">
-      {/* Aggressive Visual Alarm Background with Strobe Effect */}
+      {/* Calm Visual Alarm Background */}
       <motion.div 
-        animate={{ 
-          backgroundColor: ["rgba(0,0,0,0.9)", "rgba(220,38,38,0.8)", "rgba(0,0,0,0.9)", "rgba(255,255,255,0.2)", "rgba(0,0,0,0.9)"] 
-        }}
-        transition={{ duration: 0.4, repeat: Infinity }}
-        className="absolute inset-0 backdrop-blur-xl"
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        transition={{ duration: 0.3 }}
+        className="absolute inset-0 bg-black/90 backdrop-blur-xl"
       />
       
       <motion.div 
         initial={{ scale: 0.8, y: 50, opacity: 0 }}
-        animate={{ 
-          scale: [1, 1.05, 1], 
-          y: 0, 
-          opacity: 1,
-          rotate: [0, -3, 3, -3, 0]
-        }}
-        transition={{
-          scale: { duration: 0.2, repeat: Infinity },
-          rotate: { duration: 0.2, repeat: Infinity }
-        }}
-        className="bg-card border-8 border-danger w-full max-w-md rounded-[3rem] overflow-hidden shadow-[0_0_150px_rgba(220,38,38,0.8)] relative z-10"
+        animate={{ scale: 1, y: 0, opacity: 1 }}
+        transition={{ type: "spring", damping: 25, stiffness: 300 }}
+        className="bg-card border-4 border-danger w-full max-w-md rounded-3xl overflow-hidden shadow-[0_0_80px_rgba(220,38,38,0.4)] relative z-10"
       >
         <div className="p-8 text-center space-y-6">
           <div className="relative">
             <motion.div 
               animate={{ 
-                scale: [1, 1.5, 1],
-                opacity: [0.6, 0, 0.6]
+                scale: [1, 1.2, 1],
+                opacity: [0.3, 0.6, 0.3]
               }}
-              transition={{ 
-                duration: 1, 
-                repeat: Infinity,
-                ease: "easeOut" 
-              }}
+              transition={{ duration: 2, repeat: Infinity }}
               className="absolute inset-0 bg-danger rounded-full blur-2xl"
             />
             <div className="w-24 h-24 bg-danger/20 rounded-full flex items-center justify-center mx-auto relative z-10">
               <motion.div
-                animate={{ rotate: [-30, 30, -30, 30, 0] }}
-                transition={{ duration: 0.3, repeat: Infinity }}
+                animate={{ rotate: [-10, 10, -10] }}
+                transition={{ duration: 0.5, repeat: Infinity }}
               >
                 <Bell size={48} className="text-danger" />
               </motion.div>
@@ -1618,6 +1646,49 @@ ${clientsContext}`;
     );
   }
 
+  const NotificationBell = () => (
+    <div className="relative z-50">
+      <button 
+        onClick={() => setShowNotificationsBox(!showNotificationsBox)}
+        className={cn("p-2 rounded-xl transition-all relative", showNotificationsBox ? "bg-primary text-white" : "bg-white/5 text-white/50 hover:bg-white/10 hover:text-white")}
+      >
+        <Bell size={20} />
+        {notificationsList.length > 0 && <span className="absolute top-1.5 right-2 w-2.5 h-2.5 bg-danger border border-card rounded-full animate-pulse" />}
+      </button>
+      <AnimatePresence>
+        {showNotificationsBox && (
+          <motion.div 
+            initial={{ opacity: 0, y: 10, scale: 0.95 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            exit={{ opacity: 0, y: 10, scale: 0.95 }}
+            className="absolute top-full left-0 md:left-auto md:right-0 mt-2 w-72 bg-card border border-border rounded-2xl shadow-2xl overflow-hidden flex flex-col max-h-[60vh] max-w-[90vw]"
+          >
+            <div className="p-3 border-b border-white/5 flex justify-between items-center bg-white/5">
+              <h3 className="font-bold text-sm">التنبيهات النشطة</h3>
+              <span className="text-xs bg-danger text-white px-2 py-0.5 rounded-full font-bold">{notificationsList.length}</span>
+            </div>
+            <div className="flex-1 overflow-y-auto p-2 space-y-2 hide-scrollbar">
+              {notificationsList.length > 0 ? (
+                notificationsList.map((n, i) => (
+                  <div key={`${n.id}-${i}`} className="p-3 bg-bg rounded-lg border border-border flex flex-col gap-1 hover:bg-white/5 transition-colors text-right">
+                    <div className="flex items-center gap-2">
+                      {n.type === 'task' ? <CheckSquare size={14} className="text-accent shrink-0" /> : <Calendar size={14} className="text-secondary shrink-0" />}
+                      <span className="font-bold text-sm leading-tight">{n.title}</span>
+                    </div>
+                    <p className="text-[10px] text-white/50 truncate pr-6">{n.subtitle}</p>
+                    <p className={`text-[9px] font-bold mt-1 pr-6 ${n.type === 'task' ? 'text-accent' : 'text-secondary'}`}>{n.date}</p>
+                  </div>
+                ))
+              ) : (
+                <div className="p-4 text-center text-white/40 text-xs">لا توجد تنبيهات حالية</div>
+              )}
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </div>
+  );
+
   return (
     <div className="flex flex-col flex-1 min-h-[100dvh] bg-bg text-white w-full">
       {/* Welcome Modal for Interaction */}
@@ -1649,37 +1720,42 @@ ${clientsContext}`;
         )}
       </AnimatePresence>
 
-      {/* Mobile Top Header */}
-      <div className="md:hidden sticky top-0 bg-card/80 backdrop-blur-md border-b border-border z-40 px-4 pb-4 pt-10 safe-top">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 bg-primary/20 rounded-full flex items-center justify-center text-primary">
-              <Scale size={20} />
-            </div>
-            <div>
-              <h1 className="font-bold text-sm truncate w-40">{lawyerProfile?.name || 'المحامي'}</h1>
-              <p className="text-[10px] text-white/50">النظام الذكي</p>
-            </div>
-          </div>
-          <button 
-            onClick={() => setActiveTab('settings')}
-            className={`p-2 rounded-xl transition-all ${activeTab === 'settings' ? 'bg-primary text-white' : 'bg-white/5 text-white/50 hover:bg-white/10 hover:text-white'}`}
-          >
-            <Settings size={20} />
-          </button>
-        </div>
-      </div>
 
-      <Sidebar activeTab={activeTab} setActiveTab={setActiveTab} handleLogout={handleLogout} />
-      
-      <main className={cn(
-        "md:pr-64 p-4 md:p-6 min-h-[100dvh] transition-all duration-300 flex flex-col",
-        isKeyboardOpen ? "pb-4" : "pb-24"
-      )}>
-        <div className="max-w-7xl mx-auto w-full flex-1 flex flex-col">
-          <div className="flex justify-end mb-4 shrink-0">
-            <SoundStatus />
-          </div>
+            {/* Mobile Top Header */}
+            <div className="md:hidden sticky top-0 bg-card/80 backdrop-blur-md border-b border-border z-40 px-4 pb-4 pt-14 safe-top">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 bg-primary/20 rounded-full flex items-center justify-center text-primary">
+                    <Scale size={20} />
+                  </div>
+                  <div>
+                    <h1 className="font-bold text-sm truncate w-40">{lawyerProfile?.name || 'المحامي'}</h1>
+                    <p className="text-[10px] text-white/50">النظام الذكي</p>
+                  </div>
+                </div>
+                <div className="flex items-center gap-2">
+                  <NotificationBell />
+                  <button 
+                    onClick={() => setActiveTab('settings')}
+                    className={`p-2 rounded-xl transition-all ${activeTab === 'settings' ? 'bg-primary text-white' : 'bg-white/5 text-white/50 hover:bg-white/10 hover:text-white'}`}
+                  >
+                    <Settings size={20} />
+                  </button>
+                </div>
+              </div>
+            </div>
+
+            <Sidebar activeTab={activeTab} setActiveTab={setActiveTab} handleLogout={handleLogout} />
+            
+            <main className={cn(
+              "md:pr-64 p-4 md:p-6 min-h-[100dvh] transition-all duration-300 flex flex-col",
+              isKeyboardOpen ? "pb-4" : "pb-24"
+            )}>
+              <div className="max-w-7xl mx-auto w-full flex-1 flex flex-col relative z-30">
+                <div className="justify-end items-center gap-3 mb-4 shrink-0 hidden md:flex">
+                  <NotificationBell />
+                  <SoundStatus />
+                </div>
           {activeTab === 'dashboard' && (
             <Dashboard 
               cases={cases} 
@@ -2024,7 +2100,7 @@ ${clientsContext}`;
                         <div className="flex flex-col items-center justify-center pt-5 pb-6">
                           <Upload className="w-8 h-8 mb-3 text-white/30" />
                           <p className="mb-2 text-sm text-white/50">اضغط لرفع ملف صوتي</p>
-                          <p className="text-xs text-white/30">MP3, WAV (بحد أقصى 2MB)</p>
+                          <p className="text-xs text-white/30">MP3, WAV (بحد أقصى 5MB)</p>
                         </div>
                         <input type="file" className="hidden" accept="audio/*" onChange={handleFileUpload} />
                       </label>
@@ -2333,8 +2409,11 @@ ${clientsContext}`;
             </div>
           )}
           
-          {/* شريط تمرير سحري يحمي محتواك من الاختفاء خلف الأزرار السفلية وشعارات الأندرويد */}
-          <div className="h-32 md:h-16 w-full shrink-0 opacity-0 pointer-events-none">فضاوة السحب النهائي</div>
+          {/* شريط تمرير سحري يحمي محتواك من الاختفاء خلف الأزرار السفلية والكيبورد */}
+          <div className={cn(
+            "w-full shrink-0 opacity-0 pointer-events-none transition-all duration-300",
+            isKeyboardOpen ? "h-[50vh]" : "h-32 md:h-16"
+          )}>فضاوة السحب النهائي</div>
         </div>
       </main>
 
@@ -3405,17 +3484,29 @@ const ProfileView = ({ profile, onUpdate }: { profile: LawyerProfile, onUpdate: 
               
               <div className="flex justify-center gap-4 border-t border-white/5 pt-6">
                 <div className="text-center">
-                  <p className="text-lg font-bold">124</p>
+                  {isEditing ? (
+                    <input type="text" value={formData.stats?.casesCount || "124"} onChange={e => setFormData({...formData, stats: {...formData.stats, casesCount: e.target.value} as any})} className="w-16 text-center bg-bg border border-border rounded-lg text-lg font-bold outline-none focus:border-primary" />
+                  ) : (
+                    <p className="text-lg font-bold">{formData.stats?.casesCount || "124"}</p>
+                  )}
                   <p className="text-[10px] text-white/40 uppercase tracking-wider">قضية</p>
                 </div>
                 <div className="w-px h-8 bg-white/5 self-center" />
                 <div className="text-center">
-                  <p className="text-lg font-bold">98%</p>
+                  {isEditing ? (
+                    <input type="text" value={formData.stats?.successRate || "98%"} onChange={e => setFormData({...formData, stats: {...formData.stats, successRate: e.target.value} as any})} className="w-16 text-center bg-bg border border-border rounded-lg text-lg font-bold outline-none focus:border-primary" />
+                  ) : (
+                    <p className="text-lg font-bold">{formData.stats?.successRate || "98%"}</p>
+                  )}
                   <p className="text-[10px] text-white/40 uppercase tracking-wider">نجاح</p>
                 </div>
                 <div className="w-px h-8 bg-white/5 self-center" />
                 <div className="text-center">
-                  <p className="text-lg font-bold">10+</p>
+                  {isEditing ? (
+                    <input type="text" value={formData.stats?.years || "10+"} onChange={e => setFormData({...formData, stats: {...formData.stats, years: e.target.value} as any})} className="w-16 text-center bg-bg border border-border rounded-lg text-lg font-bold outline-none focus:border-primary" />
+                  ) : (
+                    <p className="text-lg font-bold">{formData.stats?.years || "10+"}</p>
+                  )}
                   <p className="text-[10px] text-white/40 uppercase tracking-wider">سنوات</p>
                 </div>
               </div>
@@ -3594,19 +3685,35 @@ const ProfileView = ({ profile, onUpdate }: { profile: LawyerProfile, onUpdate: 
               <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                 <div className="p-4 bg-white/5 rounded-2xl text-center">
                   <p className="text-xs text-white/40 mb-1">القضايا المربوحة</p>
-                  <p className="text-xl font-bold text-success">92</p>
+                  {isEditing ? (
+                    <input type="text" value={formData.stats?.wonCases || "92"} onChange={e => setFormData({...formData, stats: {...formData.stats, wonCases: e.target.value} as any})} className="w-full text-center bg-bg border border-border rounded-lg text-xl font-bold text-success outline-none focus:border-success py-1" />
+                  ) : (
+                    <p className="text-xl font-bold text-success">{formData.stats?.wonCases || "92"}</p>
+                  )}
                 </div>
                 <div className="p-4 bg-white/5 rounded-2xl text-center">
                   <p className="text-xs text-white/40 mb-1">قيد التنفيذ</p>
-                  <p className="text-xl font-bold text-primary">18</p>
+                  {isEditing ? (
+                    <input type="text" value={formData.stats?.activeCases || "18"} onChange={e => setFormData({...formData, stats: {...formData.stats, activeCases: e.target.value} as any})} className="w-full text-center bg-bg border border-border rounded-lg text-xl font-bold text-primary outline-none focus:border-primary py-1" />
+                  ) : (
+                    <p className="text-xl font-bold text-primary">{formData.stats?.activeCases || "18"}</p>
+                  )}
                 </div>
                 <div className="p-4 bg-white/5 rounded-2xl text-center">
                   <p className="text-xs text-white/40 mb-1">ساعات المرافعة</p>
-                  <p className="text-xl font-bold text-accent">1,240</p>
+                  {isEditing ? (
+                    <input type="text" value={formData.stats?.hoursLogged || "1,240"} onChange={e => setFormData({...formData, stats: {...formData.stats, hoursLogged: e.target.value} as any})} className="w-full text-center bg-bg border border-border rounded-lg text-xl font-bold text-accent outline-none focus:border-accent py-1" />
+                  ) : (
+                    <p className="text-xl font-bold text-accent">{formData.stats?.hoursLogged || "1,240"}</p>
+                  )}
                 </div>
                 <div className="p-4 bg-white/5 rounded-2xl text-center">
                   <p className="text-xs text-white/40 mb-1">رضا العملاء</p>
-                  <p className="text-xl font-bold text-secondary">4.9/5</p>
+                  {isEditing ? (
+                    <input type="text" value={formData.stats?.clientSatisfaction || "4.9/5"} onChange={e => setFormData({...formData, stats: {...formData.stats, clientSatisfaction: e.target.value} as any})} className="w-full text-center bg-bg border border-border rounded-lg text-xl font-bold text-secondary outline-none focus:border-secondary py-1" />
+                  ) : (
+                    <p className="text-xl font-bold text-secondary">{formData.stats?.clientSatisfaction || "4.9/5"}</p>
+                  )}
                 </div>
               </div>
             </section>
