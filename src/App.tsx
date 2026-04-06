@@ -1525,11 +1525,11 @@ ${clientsContext}`;
 
   if (!isLoggedIn) {
     return (
-      <div className="min-h-[100dvh] bg-bg flex flex-col items-center justify-center p-4 overflow-y-auto">
+      <div className="min-h-[100dvh] bg-bg flex flex-col p-4 overflow-y-auto">
         <motion.div 
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
-          className="w-full max-w-md space-y-8 my-auto py-8"
+          className="w-full max-w-md space-y-8 mx-auto mt-12 md:mt-24 mb-12"
         >
           <div className="text-center">
             <div className="w-20 h-20 bg-primary rounded-3xl flex items-center justify-center mx-auto shadow-2xl shadow-primary/30 mb-6">
@@ -1654,7 +1654,10 @@ ${clientsContext}`;
 
       <Sidebar activeTab={activeTab} setActiveTab={setActiveTab} handleLogout={handleLogout} />
       
-      <main className="md:pr-64 p-4 md:p-6 min-h-[100dvh] pb-24 md:pb-6">
+      <main 
+        className="md:pr-64 p-4 md:p-6 min-h-[100dvh]"
+        style={{ paddingBottom: 'calc(8rem + env(safe-area-inset-bottom))' }}
+      >
         <div className="max-w-7xl mx-auto">
           <div className="flex justify-end mb-4">
             <SoundStatus />
