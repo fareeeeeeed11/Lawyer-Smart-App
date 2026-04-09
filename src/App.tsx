@@ -1110,7 +1110,8 @@ export default function App() {
 
   const handleSendMessage = async () => {
     if (!input.trim()) return;
-    const userMsg: Message = { role: 'user', text: input };
+    const userText = input.trim();
+    const userMsg: Message = { role: 'user', text: userText };
     setMessages(prev => [...prev, userMsg]);
     setInput('');
     setIsTyping(true);
@@ -1141,7 +1142,7 @@ ${casesContext}
 العملاء الحاليون:
 ${clientsContext}`;
 
-      const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`, {
+      const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json'
@@ -1152,7 +1153,7 @@ ${clientsContext}`;
           },
           contents: [
             {
-              parts: [{ text: input }]
+              parts: [{ text: userText }]
             }
           ]
         })
@@ -1160,16 +1161,26 @@ ${clientsContext}`;
 
       if (!response.ok) {
         const errText = await response.text();
-        throw new Error(`API Error: ${response.status} ${errText}`);
+        console.error('Gemini API Error:', response.status, errText);
+        throw new Error(`${response.status}`);
       }
       
       const data = await response.json();
       const responseText = data.candidates?.[0]?.content?.parts?.[0]?.text || 'عذراً، حدث خطأ في معالجة طلبك.';
       const modelMsg: Message = { role: 'model', text: responseText };
       setMessages(prev => [...prev, modelMsg]);
-    } catch (error) {
-      console.error(error);
-      setMessages(prev => [...prev, { role: 'model', text: 'حدث خطأ في الاتصال بالمستشار الذكي.' }]);
+    } catch (error: any) {
+      console.error('AI Advisor Error:', error);
+      const errMsg = error?.message || '';
+      let userFacingMsg = 'حدث خطأ في الاتصال بالمستشار الذكي. تأكد من اتصالك بالإنترنت وأعد المحاولة.';
+      if (errMsg.includes('403')) {
+        userFacingMsg = 'مفتاح الذكاء الاصطناعي غير صالح أو منتهي الصلاحية. يرجى تحديث المفتاح في ملف .env';
+      } else if (errMsg.includes('429')) {
+        userFacingMsg = 'تم تجاوز الحد المسموح للطلبات. يرجى الانتظار دقيقة ثم إعادة المحاولة.';
+      } else if (errMsg.includes('404')) {
+        userFacingMsg = 'نموذج الذكاء الاصطناعي غير متوفر حالياً. جاري المحاولة بنموذج بديل...';
+      }
+      setMessages(prev => [...prev, { role: 'model', text: userFacingMsg }]);
     } finally {
       setIsTyping(false);
     }
