@@ -321,19 +321,52 @@ export default function App() {
   };
 
   const [isKeyboardOpen, setIsKeyboardOpen] = useState(false);
+  const [viewportHeight, setViewportHeight] = useState('100dvh');
 
   useEffect(() => {
-    // استخدمنا مكتبة Capacitor الأصلية لكشف الكيبورد 100% بدقة
-    const showListener = Keyboard.addListener('keyboardWillShow', info => {
-      setIsKeyboardOpen(true);
-    });
-    const hideListener = Keyboard.addListener('keyboardWillHide', () => {
-      setIsKeyboardOpen(false);
-    });
+    // 1. Web visualViewport detection (Works in Chrome Android Browser)
+    const handleViewportResize = () => {
+      if (window.visualViewport) {
+        setViewportHeight(`${window.visualViewport.height}px`);
+        setIsKeyboardOpen(window.visualViewport.height < window.innerHeight * 0.8);
+      } else {
+        setViewportHeight(`${window.innerHeight}px`);
+        setIsKeyboardOpen(window.innerHeight < window.screen.height * 0.8);
+      }
+    };
+    
+    // Set initial
+    handleViewportResize();
+
+    if (window.visualViewport) {
+      window.visualViewport.addEventListener('resize', handleViewportResize);
+    } else {
+      window.addEventListener('resize', handleViewportResize);
+    }
+
+    // 2. Capacitor Custom Native Fallback 
+    let showListener: any, hideListener: any;
+    try {
+      showListener = Keyboard.addListener('keyboardWillShow', info => {
+        setIsKeyboardOpen(true);
+      });
+      hideListener = Keyboard.addListener('keyboardWillHide', () => {
+        setIsKeyboardOpen(false);
+      });
+    } catch (e) {
+      console.log('Not running in native capacitor');
+    }
 
     return () => {
-      showListener.then(l => l.remove());
-      hideListener.then(l => l.remove());
+      if (window.visualViewport) {
+        window.visualViewport.removeEventListener('resize', handleViewportResize);
+      } else {
+        window.addEventListener('resize', handleViewportResize);
+      }
+      try {
+        if (showListener) showListener.then((l: any) => l.remove());
+        if (hideListener) hideListener.then((l: any) => l.remove());
+      } catch (e) {}
     };
   }, []);
 
@@ -1117,10 +1150,8 @@ export default function App() {
     setIsTyping(true);
 
     try {
+      // قراءة المفتاح من الخزنة الآمنة .env (Vite Environment)
       let apiKey = import.meta.env.VITE_GEMINI_API_KEY;
-      if (!apiKey || apiKey === 'undefined' || String(apiKey).trim() === '') {
-        apiKey = 'AIzaSyCA1utQr88R_mzjH8Jlu3T4KvjAw4zVENg';
-      }
       if (!apiKey) {
         setMessages(prev => [...prev, { role: 'model', text: 'عذراً، لم يتم ضبط مفتاح الذكاء الاصطناعي (API KEY). يرجى ضبطه في الإعدادات لتفعيل المستشار الذكي.' }]);
         setIsTyping(false);
@@ -1907,11 +1938,14 @@ ${clientsContext}`;
 
             <Sidebar activeTab={activeTab} setActiveTab={setActiveTab} handleLogout={handleLogout} />
             
-            <main className={cn(
-              "md:pr-64 p-4 md:p-6 min-h-[100dvh] transition-all duration-300 flex flex-col",
-              isKeyboardOpen ? "pb-4" : "pb-24"
-            )}>
-              <div className="max-w-7xl mx-auto w-full flex-1 flex flex-col relative z-30">
+            <main 
+              className={cn(
+                "md:pr-64 p-4 md:p-6 transition-all duration-300 flex flex-col w-full",
+                isKeyboardOpen ? "pb-4" : "pb-24"
+              )}
+              style={{ minHeight: viewportHeight, height: viewportHeight }}
+            >
+              <div className="max-w-7xl mx-auto w-full flex-1 flex flex-col relative z-30 h-full">
                 <div className="justify-end items-center gap-3 mb-4 shrink-0 hidden md:flex">
                   <NotificationBell />
                   <SoundStatus />
@@ -3552,7 +3586,7 @@ const AIView = ({ messages, input, setInput, handleSendMessage, isTyping, isKeyb
         <p className="text-[10px] text-center text-white/20 mt-3">
           المستشار الذكي قد يخطئ، يرجى مراجعة الاستشارات الهامة.
         </p>
-        <div className={cn("w-full transition-all duration-300 pointer-events-none md:hidden", isKeyboardOpen ? "h-[45vh]" : "h-0")} />
+        <div className={cn("w-full transition-all duration-300 pointer-events-none md:hidden", isKeyboardOpen ? "h-6" : "h-0")} />
       </div>
     </div>
   );
