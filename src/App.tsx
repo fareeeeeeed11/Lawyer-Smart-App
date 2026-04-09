@@ -1142,45 +1142,77 @@ ${casesContext}
 العملاء الحاليون:
 ${clientsContext}`;
 
-      const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({
-          system_instruction: {
-            parts: [{ text: systemInstruction }]
-          },
-          contents: [
-            {
-              parts: [{ text: userText }]
-            }
-          ]
-        })
-      });
+      const modelsToTry = [
+        'gemini-2.5-flash',
+        'gemini-2.0-flash',
+        'gemini-flash-lite-latest'
+      ];
 
-      if (!response.ok) {
-        const errText = await response.text();
-        console.error('Gemini API Error:', response.status, errText);
-        throw new Error(`${response.status}`);
+      let lastError = null;
+      let modelResponseText = null;
+
+      for (const modelName of modelsToTry) {
+        try {
+          const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${modelName}:generateContent?key=${apiKey}`, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+              system_instruction: {
+                parts: [{ text: systemInstruction }]
+              },
+              contents: [
+                {
+                  parts: [{ text: userText }]
+                }
+              ]
+            })
+          });
+
+          if (!response.ok) {
+            const errText = await response.text();
+            console.warn(`Model ${modelName} failed:`, response.status);
+            let parsedError = errText;
+            try {
+              const jsonErr = JSON.parse(errText);
+              parsedError = jsonErr.error?.message || errText;
+            } catch(e) {}
+            
+            lastError = new Error(`خطأ من الخادم (Status ${response.status}): ${parsedError}`);
+            
+            // If it's a 503 (High Demand) or 404 (Not Found), try the next model!
+            if (response.status === 503 || response.status === 404) {
+              continue; 
+            } else {
+              // For other errors (like 400 bad request or 403 invalid key), throw immediately
+              throw lastError;
+            }
+          }
+          
+          const data = await response.json();
+          modelResponseText = data.candidates?.[0]?.content?.parts?.[0]?.text || 'عذراً، لم أتمكن من صياغة إجابة مناسبة لك.';
+          // It worked! Break the loop
+          break;
+        } catch (iterationError) {
+          lastError = iterationError;
+          // If we caught an immediate error (like network down), just throw it
+          if (iterationError instanceof TypeError) {
+            throw iterationError;
+          }
+        }
       }
-      
-      const data = await response.json();
-      const responseText = data.candidates?.[0]?.content?.parts?.[0]?.text || 'عذراً، حدث خطأ في معالجة طلبك.';
-      const modelMsg: Message = { role: 'model', text: responseText };
+
+      if (!modelResponseText && lastError) {
+        throw lastError; // If all models failed, throw the last error to be caught by the outer block
+      }
+
+      const modelMsg: Message = { role: 'model', text: modelResponseText! };
       setMessages(prev => [...prev, modelMsg]);
     } catch (error: any) {
       console.error('AI Advisor Error:', error);
-      const errMsg = error?.message || '';
-      let userFacingMsg = 'حدث خطأ في الاتصال بالمستشار الذكي. تأكد من اتصالك بالإنترنت وأعد المحاولة.';
-      if (errMsg.includes('403')) {
-        userFacingMsg = 'مفتاح الذكاء الاصطناعي غير صالح أو منتهي الصلاحية. يرجى تحديث المفتاح في ملف .env';
-      } else if (errMsg.includes('429')) {
-        userFacingMsg = 'تم تجاوز الحد المسموح للطلبات. يرجى الانتظار دقيقة ثم إعادة المحاولة.';
-      } else if (errMsg.includes('404')) {
-        userFacingMsg = 'نموذج الذكاء الاصطناعي غير متوفر حالياً. جاري المحاولة بنموذج بديل...';
-      }
-      setMessages(prev => [...prev, { role: 'model', text: userFacingMsg }]);
+      const errMsg = error?.message || String(error);
+      setMessages(prev => [...prev, { role: 'model', text: `رسالة الخطأ التفصيلية: ${errMsg}` }]);
     } finally {
       setIsTyping(false);
     }
@@ -1205,12 +1237,12 @@ ${clientsContext}`;
 
     return (
       <div className="fixed inset-0 bg-bg/80 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-        <motion.div initial={{ scale: 0.9, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} className="bg-card border border-border w-full max-w-md rounded-3xl overflow-hidden shadow-2xl">
-          <div className="p-6 border-b border-border flex items-center justify-between">
+        <motion.div initial={{ scale: 0.9, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} className="bg-card border border-border w-full max-w-md rounded-t-3xl md:rounded-3xl overflow-hidden shadow-2xl flex flex-col h-[90vh] md:h-auto">
+          <div className="p-6 border-b border-border flex items-center justify-between shrink-0">
             <h2 className="text-xl font-bold">{client ? 'تعديل بيانات العميل' : 'إضافة عميل جديد'}</h2>
             <button onClick={onClose} className="p-2 hover:bg-white/10 rounded-full"><X size={20} /></button>
           </div>
-          <div className="p-6 space-y-4">
+          <div className="p-6 space-y-4 flex-1 overflow-y-auto">
             <div className="space-y-1">
               <label className="text-xs text-white/50 pr-1">الاسم الكامل</label>
               <input type="text" value={formData.name} onChange={e => setFormData({ ...formData, name: e.target.value })} className="w-full bg-bg border border-border rounded-xl px-4 py-2.5 focus:border-primary focus:outline-none" />
@@ -1271,12 +1303,12 @@ ${clientsContext}`;
 
     return (
       <div className="fixed inset-0 bg-bg/80 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-        <motion.div initial={{ scale: 0.9, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} className="bg-card border border-border w-full max-w-md rounded-3xl overflow-hidden shadow-2xl">
-          <div className="p-6 border-b border-border flex items-center justify-between">
+        <motion.div initial={{ scale: 0.9, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} className="bg-card border border-border w-full max-w-md rounded-t-3xl md:rounded-3xl overflow-hidden shadow-2xl flex flex-col h-[90vh] md:h-auto">
+          <div className="p-6 border-b border-border flex items-center justify-between shrink-0">
             <h2 className="text-xl font-bold">{session ? 'تعديل الجلسة' : 'إضافة جلسة جديدة'}</h2>
             <button onClick={onClose} className="p-2 hover:bg-white/10 rounded-full"><X size={20} /></button>
           </div>
-          <div className="p-6 space-y-4">
+          <div className="p-6 space-y-4 flex-1 overflow-y-auto">
             <div className="space-y-1">
               <label className="text-xs text-white/50 pr-1">اختر القضية</label>
               <select 
@@ -1291,7 +1323,7 @@ ${clientsContext}`;
               </select>
             </div>
             
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="space-y-1">
                 <label className="text-xs text-white/50 pr-1">التاريخ</label>
                 <input type="date" value={formData.date} onChange={e => setFormData({ ...formData, date: e.target.value })} className="w-full bg-bg border border-border rounded-xl px-4 py-2.5 focus:border-primary focus:outline-none" />
@@ -1397,17 +1429,17 @@ ${clientsContext}`;
 
     return (
       <div className="fixed inset-0 bg-bg/80 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-        <motion.div initial={{ scale: 0.9, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} className="bg-card border border-border w-full max-w-lg rounded-3xl overflow-hidden">
-          <div className="p-6 border-b border-border flex items-center justify-between">
+        <motion.div initial={{ scale: 0.9, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} className="bg-card border border-border w-full max-w-lg rounded-t-3xl md:rounded-3xl overflow-hidden flex flex-col h-[90vh] md:h-auto">
+          <div className="p-6 border-b border-border flex items-center justify-between shrink-0">
             <h2 className="text-xl font-bold">{caseData ? 'تعديل القضية' : 'إضافة قضية جديدة'}</h2>
             <button onClick={onClose} className="p-2 hover:bg-white/10 rounded-full"><X size={20} /></button>
           </div>
-          <div className="p-6 space-y-4 max-h-[70vh] overflow-y-auto">
+          <div className="p-6 space-y-4 flex-1 overflow-y-auto">
             <div className="space-y-1">
               <label className="text-xs text-white/50 pr-1">عنوان القضية</label>
               <input type="text" value={formData.title} onChange={(e) => setFormData({ ...formData, title: e.target.value })} className="w-full bg-bg border border-border rounded-xl px-4 py-2.5 focus:border-primary focus:outline-none" />
             </div>
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="space-y-1">
                 <label className="text-xs text-white/50 pr-1">نوع القضية</label>
                 <select value={formData.type} onChange={(e) => setFormData({ ...formData, type: e.target.value })} className="w-full bg-bg border border-border rounded-xl px-4 py-2.5 focus:border-primary focus:outline-none">
@@ -1433,7 +1465,7 @@ ${clientsContext}`;
                 </div>
               )}
             </div>
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="space-y-1">
                 <label className="text-xs text-white/50 pr-1">رقم الهاتف</label>
                 <input type="text" value={formData.clientPhone} onChange={(e) => setFormData({ ...formData, clientPhone: e.target.value })} className="w-full bg-bg border border-border rounded-xl px-4 py-2.5 focus:border-primary focus:outline-none" />
@@ -1443,7 +1475,7 @@ ${clientsContext}`;
                 <input type="email" value={formData.clientEmail} onChange={(e) => setFormData({ ...formData, clientEmail: e.target.value })} className="w-full bg-bg border border-border rounded-xl px-4 py-2.5 focus:border-primary focus:outline-none" />
               </div>
             </div>
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="space-y-1">
                 <label className="text-xs text-white/50 pr-1">الأولوية</label>
                 <select 
@@ -1462,7 +1494,7 @@ ${clientsContext}`;
               </div>
             </div>
 
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="space-y-1">
                 <label className="text-xs text-white/50 pr-1">إجمالي الأتعاب</label>
                 <input type="number" value={formData.totalFees} onChange={(e) => setFormData({ ...formData, totalFees: e.target.value })} className="w-full bg-bg border border-border rounded-xl px-4 py-2.5 focus:border-primary focus:outline-none" />
@@ -1847,7 +1879,10 @@ ${clientsContext}`;
 
 
             {/* Mobile Top Header */}
-            <div className="md:hidden sticky top-0 bg-card/80 backdrop-blur-md border-b border-border z-40 px-4 pb-4 pt-14 safe-top">
+            <div className={cn(
+              "md:hidden sticky top-0 bg-card/80 backdrop-blur-md border-b border-border z-40 px-4 pb-4 pt-14 safe-top transition-all duration-300",
+              isKeyboardOpen && "hidden"
+            )}>
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-3">
                   <div className="w-10 h-10 bg-primary/20 rounded-full flex items-center justify-center text-primary">
@@ -3378,9 +3413,15 @@ const AIView = ({ messages, input, setInput, handleSendMessage, isTyping, isKeyb
   }, [messages, isTyping]);
 
   return (
-    <div className="flex-1 min-h-[50vh] flex flex-col bg-card border border-border rounded-2xl md:rounded-3xl overflow-hidden animate-in fade-in duration-500 shadow-2xl relative">
+    <div className={cn(
+      "flex-1 flex flex-col bg-card border border-border rounded-2xl md:rounded-3xl overflow-hidden animate-in fade-in duration-500 shadow-2xl relative",
+      isKeyboardOpen ? "h-full min-h-0" : "min-h-[50vh]"
+    )}>
       {/* Persistent Header */}
-      <header className="p-4 md:p-6 border-b border-border bg-white/5 backdrop-blur-md flex items-center justify-between sticky top-0 z-20">
+      <header className={cn(
+        "p-4 md:p-6 border-b border-border bg-white/5 backdrop-blur-md flex items-center justify-between sticky top-0 z-20",
+        isKeyboardOpen && "hidden md:flex"
+      )}>
         <div className="flex items-center gap-3 md:gap-4">
           <div className="relative">
             <div className="w-10 h-10 md:w-12 md:h-12 bg-primary/20 rounded-xl md:rounded-2xl flex items-center justify-center text-primary border border-primary/20 shadow-inner">
@@ -4135,7 +4176,7 @@ const AccountStatementsView = ({
                 />
               </div>
             </div>
-            <div className="divide-y divide-border max-h-[70vh] overflow-y-auto">
+            <div className="divide-y divide-border max-h-[50vh] md:max-h-[70vh] overflow-y-auto">
               {clientsWithCases.length === 0 ? (
                 <div className="py-12 text-center text-white/30">
                   <Users size={40} className="mx-auto mb-3 opacity-20" />
@@ -4457,9 +4498,9 @@ const AccountStatementsView = ({
               initial={{ scale: 0.9, opacity: 0 }}
               animate={{ scale: 1, opacity: 1 }}
               exit={{ scale: 0.9, opacity: 0 }}
-              className="bg-card border border-border w-full max-w-md rounded-3xl overflow-hidden shadow-2xl"
+              className="bg-card border border-border w-full max-w-md rounded-t-3xl md:rounded-3xl overflow-hidden shadow-2xl flex flex-col h-[90vh] md:h-auto"
             >
-              <div className="p-6 border-b border-border flex items-center justify-between">
+              <div className="p-6 border-b border-border flex items-center justify-between shrink-0">
                 <h2 className="text-xl font-bold flex items-center gap-2">
                   <CreditCard size={20} className="text-amber-400" />
                   إضافة دفعة جديدة
@@ -4468,7 +4509,7 @@ const AccountStatementsView = ({
                   <X size={20} />
                 </button>
               </div>
-              <div className="p-6 space-y-4">
+              <div className="p-6 space-y-4 flex-1 overflow-y-auto">
                 {/* Select Case */}
                 <div className="space-y-1">
                   <label className="text-xs text-white/50 pr-1">القضية</label>
