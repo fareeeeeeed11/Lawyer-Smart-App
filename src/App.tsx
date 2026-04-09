@@ -1119,7 +1119,7 @@ export default function App() {
     try {
       let apiKey = import.meta.env.VITE_GEMINI_API_KEY;
       if (!apiKey || apiKey === 'undefined' || String(apiKey).trim() === '') {
-        apiKey = 'AIzaSyAtLXEeuhOeG56teROePQIiV9aL6D-DhLo';
+        apiKey = 'AIzaSyCA1utQr88R_mzjH8Jlu3T4KvjAw4zVENg';
       }
       if (!apiKey) {
         setMessages(prev => [...prev, { role: 'model', text: 'عذراً، لم يتم ضبط مفتاح الذكاء الاصطناعي (API KEY). يرجى ضبطه في الإعدادات لتفعيل المستشار الذكي.' }]);
