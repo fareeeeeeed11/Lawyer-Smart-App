@@ -4,6 +4,7 @@
  */
 
 import React, { useState, useEffect, useRef, useMemo, useCallback } from 'react';
+import { useKeyboardHeight } from './useKeyboardHeight';
 import { 
   LayoutDashboard, 
   Briefcase, 
@@ -320,55 +321,25 @@ export default function App() {
     }, 800);
   };
 
-  const [isKeyboardOpen, setIsKeyboardOpen] = useState(false);
-  const [viewportHeight, setViewportHeight] = useState('100dvh');
+  // ============================================================
+  // GLOBAL KEYBOARD-AWARE LAYOUT (Modern visualViewport approach)
+  // The hook fires on ALL screens simultaneously — no per-screen fixes needed.
+  // ============================================================
+  const { isKeyboardVisible: isKeyboardOpen, viewportHeight, keyboardHeight } = useKeyboardHeight();
 
+  // API key state — reads from localStorage first, then .env fallback
+  const [geminiApiKey, setGeminiApiKey] = useState<string>(() => {
+    return localStorage.getItem('lawyer_gemini_api_key') || import.meta.env.VITE_GEMINI_API_KEY || '';
+  });
+  const [apiKeyInput, setApiKeyInput] = useState(geminiApiKey);
+  const [apiKeySaved, setApiKeySaved] = useState(false);
+
+  // Persist API key to localStorage whenever it changes
   useEffect(() => {
-    // 1. Web visualViewport detection (Works in Chrome Android Browser)
-    const handleViewportResize = () => {
-      if (window.visualViewport) {
-        setViewportHeight(`${window.visualViewport.height}px`);
-        setIsKeyboardOpen(window.visualViewport.height < window.innerHeight * 0.8);
-      } else {
-        setViewportHeight(`${window.innerHeight}px`);
-        setIsKeyboardOpen(window.innerHeight < window.screen.height * 0.8);
-      }
-    };
-    
-    // Set initial
-    handleViewportResize();
-
-    if (window.visualViewport) {
-      window.visualViewport.addEventListener('resize', handleViewportResize);
-    } else {
-      window.addEventListener('resize', handleViewportResize);
+    if (geminiApiKey) {
+      localStorage.setItem('lawyer_gemini_api_key', geminiApiKey);
     }
-
-    // 2. Capacitor Custom Native Fallback 
-    let showListener: any, hideListener: any;
-    try {
-      showListener = Keyboard.addListener('keyboardWillShow', info => {
-        setIsKeyboardOpen(true);
-      });
-      hideListener = Keyboard.addListener('keyboardWillHide', () => {
-        setIsKeyboardOpen(false);
-      });
-    } catch (e) {
-      console.log('Not running in native capacitor');
-    }
-
-    return () => {
-      if (window.visualViewport) {
-        window.visualViewport.removeEventListener('resize', handleViewportResize);
-      } else {
-        window.addEventListener('resize', handleViewportResize);
-      }
-      try {
-        if (showListener) showListener.then((l: any) => l.remove());
-        if (hideListener) hideListener.then((l: any) => l.remove());
-      } catch (e) {}
-    };
-  }, []);
+  }, [geminiApiKey]);
 
   const [activeTab, setActiveTab] = useState('dashboard');
   const [clients, setClients] = useState<Client[]>(() => {
@@ -1150,8 +1121,8 @@ export default function App() {
     setIsTyping(true);
 
     try {
-      // قراءة المفتاح من الخزنة الآمنة .env (Vite Environment)
-      let apiKey = import.meta.env.VITE_GEMINI_API_KEY;
+      // Read API key: localStorage (user-set) → .env fallback
+      const apiKey = geminiApiKey || import.meta.env.VITE_GEMINI_API_KEY;
       if (!apiKey) {
         setMessages(prev => [...prev, { role: 'model', text: 'عذراً، لم يتم ضبط مفتاح الذكاء الاصطناعي (API KEY). يرجى ضبطه في الإعدادات لتفعيل المستشار الذكي.' }]);
         setIsTyping(false);
@@ -1940,12 +1911,12 @@ ${clientsContext}`;
             
             <main 
               className={cn(
-                "md:pr-64 p-4 md:p-6 transition-all duration-300 flex flex-col w-full",
-                isKeyboardOpen ? "pb-4" : "pb-24"
+                "md:pr-64 p-4 md:p-6 transition-all duration-300 flex flex-col w-full overflow-y-auto",
+                isKeyboardOpen ? "pb-2" : "pb-24"
               )}
-              style={{ minHeight: viewportHeight, height: viewportHeight }}
+              style={{ height: `${viewportHeight}px`, overflowY: 'auto' }}
             >
-              <div className="max-w-7xl mx-auto w-full flex-1 flex flex-col relative z-30 h-full">
+              <div className="max-w-7xl mx-auto w-full flex-1 flex flex-col relative z-30">
                 <div className="justify-end items-center gap-3 mb-4 shrink-0 hidden md:flex">
                   <NotificationBell />
                   <SoundStatus />
@@ -2600,15 +2571,86 @@ ${clientsContext}`;
                     </div>
                   </form>
                 </div>
+                {/* ===================================================
+                    API KEY SETTINGS CARD — Persisted in localStorage
+                    =================================================== */}
+                <div className="bg-card border border-border rounded-2xl p-6 space-y-4">
+                  <div className="flex items-center gap-3">
+                    <div className="p-2 bg-primary/10 rounded-lg text-primary">
+                      <Zap size={20} />
+                    </div>
+                    <div>
+                      <h3 className="font-bold text-lg">مفتاح المستشار الذكي (API Key)</h3>
+                      <p className="text-xs text-white/40">يُستخدم للتواصل مع نموذج Gemini AI</p>
+                    </div>
+                  </div>
+
+                  <div className="space-y-3">
+                    <p className="text-sm text-white/50 leading-relaxed">
+                      أدخل مفتاح Gemini API الخاص بك من Google AI Studio. يتم حفظه محلياً على جهازك فقط ولا يُرسل لأي خادم خارجي.
+                    </p>
+
+                    <div className="relative">
+                      <input
+                        id="gemini-api-key-input"
+                        type="password"
+                        value={apiKeyInput}
+                        onChange={(e) => {
+                          setApiKeyInput(e.target.value);
+                          setApiKeySaved(false);
+                        }}
+                        placeholder="AIzaSy..."
+                        dir="ltr"
+                        className="w-full bg-bg border border-border rounded-xl px-4 py-3 text-sm focus:border-primary focus:outline-none font-mono tracking-wider"
+                      />
+                    </div>
+
+                    <button
+                      onClick={() => {
+                        const trimmed = apiKeyInput.trim();
+                        if (!trimmed) return;
+                        setGeminiApiKey(trimmed);
+                        setApiKeySaved(true);
+                        setTimeout(() => setApiKeySaved(false), 3000);
+                      }}
+                      disabled={!apiKeyInput.trim() || apiKeyInput.trim() === geminiApiKey}
+                      className={cn(
+                        "w-full py-3 rounded-xl font-bold transition-all flex items-center justify-center gap-2",
+                        apiKeySaved
+                          ? "bg-secondary/20 border border-secondary text-secondary"
+                          : "bg-primary hover:bg-primary/90 disabled:opacity-40 disabled:cursor-not-allowed text-white shadow-lg shadow-primary/20"
+                      )}
+                    >
+                      {apiKeySaved ? (
+                        <><CheckCircle2 size={18} /> تم الحفظ بنجاح!</>
+                      ) : (
+                        <><Check size={18} /> حفظ المفتاح</>
+                      )}
+                    </button>
+
+                    {geminiApiKey && (
+                      <div className="flex items-center gap-2 p-3 bg-secondary/10 border border-secondary/20 rounded-xl">
+                        <CheckCircle2 size={14} className="text-secondary shrink-0" />
+                        <p className="text-[11px] text-secondary/80">
+                          المفتاح الحالي: <span className="font-mono">{geminiApiKey.slice(0, 8)}...{geminiApiKey.slice(-4)}</span> (محفوظ محلياً)
+                        </p>
+                      </div>
+                    )}
+
+                    <div className="p-3 bg-white/5 border border-white/5 rounded-xl flex items-start gap-2">
+                      <AlertCircle size={14} className="shrink-0 text-white/30 mt-0.5" />
+                      <p className="text-[10px] text-white/30 leading-relaxed">
+                        احصل على مفتاح مجاني من <span className="text-primary">aistudio.google.com</span> — المفتاح لا يُحفظ إلا على جهازك ولا يُرسل إلى أي مكان آخر.
+                      </p>
+                    </div>
+                  </div>
+                </div>
               </div>
             </div>
           )}
           
-          {/* شريط تمرير سحري يحمي محتواك من الاختفاء خلف الأزرار السفلية والكيبورد */}
-          <div className={cn(
-            "w-full shrink-0 opacity-0 pointer-events-none transition-all duration-300",
-            isKeyboardOpen ? "h-[50vh]" : "h-32 md:h-16"
-          )}>فضاوة السحب النهائي</div>
+          {/* Bottom spacer — keeps content above the bottom nav */}
+          <div className="h-8 md:h-4 w-full shrink-0" />
         </div>
       </main>
 

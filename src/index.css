@@ -12,9 +12,24 @@
 }
 
 @layer base {
-  html, body, #root {
+  html {
     height: 100%;
+    /* *** THE GOLDEN FIX FOR ANDROID CHROME ***
+       This tells the browser: don't resize the viewport when keyboard appears.
+       Instead we listen to visualViewport and handle it ourselves.        
+       This prevents the layout from snapping/jumping on keyboard show.    */
+    height: -webkit-fill-available;
+  }
+
+  body {
+    @apply text-white font-sans antialiased;
+    direction: rtl;
+    -webkit-tap-highlight-color: transparent;
+    overscroll-behavior-y: none;
+    touch-action: manipulation;
+    /* Use min-height for body so it fills the screen */
     min-height: 100dvh;
+    min-height: -webkit-fill-available;
     background-color: var(--color-bg);
     margin: 0;
     padding: 0;
@@ -22,18 +37,37 @@
     flex: 1;
     flex-direction: column;
   }
-  
-  body {
-    @apply text-white font-sans antialiased;
-    direction: rtl;
-    -webkit-tap-highlight-color: transparent;
-    overscroll-behavior-y: none;
-    touch-action: manipulation;
+
+  #root {
+    display: flex;
+    flex-direction: column;
+    flex: 1;
+    /* Root will be sized by the keyboard-aware JS wrapper */
+    min-height: 100dvh;
   }
   
   input, select, textarea, button {
     @apply min-h-[44px]; /* Minimum touch target size */
   }
+}
+
+/* ==========================================
+   GLOBAL KEYBOARD-AWARE LAYOUT
+   The #keyboard-root div is controlled by the
+   useKeyboardHeight hook in App.tsx, which dynamically
+   sets its height equal to window.visualViewport.height.
+   This means ALL content naturally shrinks to fit above
+   the keyboard without any per-screen fixes.
+   ========================================== */
+#keyboard-root {
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  /* JS sets this to visualViewport.height on keyboard show */
+  transition: height 0.1s ease-out;
+  position: fixed;
+  top: 0; left: 0; right: 0;
+  z-index: 0;
 }
 
 .glass {
@@ -70,11 +104,5 @@
   .hide-scrollbar {
     -ms-overflow-style: none;
     scrollbar-width: none;
-  }
-}
-
-@media (max-height: 600px) and (orientation: portrait) {
-  .hide-on-keyboard {
-    display: none !important;
   }
 }

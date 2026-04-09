@@ -1,15 +1,23 @@
 <!doctype html>
-<html lang="en">
+<html lang="ar" dir="rtl">
   <head>
     <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
+    <!-- 
+      interactive-widget=resizes-content: Tells Chrome Android to NOT pan/resize  
+      the viewport when keyboard opens. Our JS (visualViewport) handles it instead.
+      This is the MODERN, standard way to control keyboard behavior in Chrome 108+.
+    -->
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover, interactive-widget=resizes-content" />
     <title>المحامي محمد الكامل</title>
     <link rel="manifest" href="/manifest.json" />
     <meta name="theme-color" content="#0a0a0a" />
     <link rel="icon" type="image/svg+xml" href="/icon.svg" />
   </head>
   <body>
-    <div id="root"></div>
+    <div id="root">
+      <!-- keyboard-root: sized dynamically by useKeyboardHeight hook -->
+      <div id="keyboard-root"></div>
+    </div>
     <script type="module" src="/src/main.tsx"></script>
   </body>
 </html>
