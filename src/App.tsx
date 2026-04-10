@@ -1795,7 +1795,7 @@ ${clientsContext}`;
 
   if (!isLoggedIn) {
     return (
-      <div className="min-h-[100dvh] bg-bg flex flex-col p-4 overflow-y-auto">
+      <div className="h-full flex flex-col bg-bg p-4 overflow-y-auto">
         <motion.div 
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
@@ -1913,7 +1913,7 @@ ${clientsContext}`;
   );
 
   return (
-    <div className="flex flex-col flex-1 min-h-[100dvh] bg-bg text-white w-full">
+    <div className="flex flex-col flex-1 h-full bg-bg text-white w-full">
       {/* Welcome Modal for Interaction */}
       <AnimatePresence>
         {showWelcome && (

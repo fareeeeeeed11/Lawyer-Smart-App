@@ -12,13 +12,24 @@
 }
 
 @layer base {
+  /*
+   * THE DEFINITIVE FIX FOR ANDROID WEBVIEW + CAPACITOR adjustResize
+   *
+   * Rule: NEVER use 100vh or 100dvh on the root elements.
+   *
+   * In Android WebViews with adjustResize, the OS natively shrinks the WebView
+   * height when the keyboard opens. If we set height/min-height to 100vh,
+   * it locks the height to the FULL screen (keyboard included), creating 
+   * an overflow and the infamous "black gap" at the bottom.
+   *
+   * The correct approach:
+   *   html, body, #root → height: 100% (inherits from the WebView which shrinks)
+   *   The main flex container → flex: 1 (grows to fill available space)
+   */
   html {
     height: 100%;
-    /* *** THE GOLDEN FIX FOR ANDROID CHROME ***
-       This tells the browser: don't resize the viewport when keyboard appears.
-       Instead we listen to visualViewport and handle it ourselves.        
-       This prevents the layout from snapping/jumping on keyboard show.    */
-    height: -webkit-fill-available;
+    width: 100%;
+    overflow: hidden;
   }
 
   body {
@@ -27,47 +38,31 @@
     -webkit-tap-highlight-color: transparent;
     overscroll-behavior-y: none;
     touch-action: manipulation;
-    /* Use min-height for body so it fills the screen */
-    min-height: 100dvh;
-    min-height: -webkit-fill-available;
     background-color: var(--color-bg);
     margin: 0;
     padding: 0;
+    /* height: 100% inherits from html which inherits from the WebView */
+    height: 100%;
+    width: 100%;
+    overflow: hidden;
     display: flex;
-    flex: 1;
     flex-direction: column;
   }
 
   #root {
     display: flex;
     flex-direction: column;
+    /* flex: 1 makes it grow to fill the available body space */
     flex: 1;
-    /* Root will be sized by the keyboard-aware JS wrapper */
-    min-height: 100dvh;
+    /* height: 100% — let the parent (body) determine our size */
+    height: 100%;
+    width: 100%;
+    overflow: hidden;
   }
-  
+
   input, select, textarea, button {
     @apply min-h-[44px]; /* Minimum touch target size */
   }
-}
-
-/* ==========================================
-   GLOBAL KEYBOARD-AWARE LAYOUT
-   The #keyboard-root div is controlled by the
-   useKeyboardHeight hook in App.tsx, which dynamically
-   sets its height equal to window.visualViewport.height.
-   This means ALL content naturally shrinks to fit above
-   the keyboard without any per-screen fixes.
-   ========================================== */
-#keyboard-root {
-  display: flex;
-  flex-direction: column;
-  overflow: hidden;
-  /* JS sets this to visualViewport.height on keyboard show */
-  transition: height 0.1s ease-out;
-  position: fixed;
-  top: 0; left: 0; right: 0;
-  z-index: 0;
 }
 
 .glass {
