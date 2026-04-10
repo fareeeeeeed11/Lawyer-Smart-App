@@ -12,6 +12,7 @@
 }
 
 @layer base {
+
   /*
    * THE DEFINITIVE FIX FOR ANDROID WEBVIEW + CAPACITOR adjustResize
    *
@@ -23,8 +24,8 @@
    * an overflow and the infamous "black gap" at the bottom.
    *
    * The correct approach:
-   *   html, body, #root → height: 100% (inherits from the WebView which shrinks)
-   *   The main flex container → flex: 1 (grows to fill available space)
+   * html, body, #root → height: 100% (inherits from the WebView which shrinks)
+   * The main flex container → flex: 1 (grows to fill available space)
    */
   html {
     height: 100%;
@@ -60,8 +61,12 @@
     overflow: hidden;
   }
 
-  input, select, textarea, button {
-    @apply min-h-[44px]; /* Minimum touch target size */
+  input,
+  select,
+  textarea,
+  button {
+    @apply min-h-[44px];
+    /* Minimum touch target size */
   }
 }
 
@@ -81,13 +86,34 @@
   padding-top: max(12px, env(safe-area-inset-top, 0px)) !important;
 }
 
+/* --- ترويض النوافذ المنبثقة (Modals) عند ظهور الكيبورد --- */
+.fixed.inset-0.z-50 {
+  align-items: flex-start !important;
+  /* نلغي التمركز العمودي لكي لا تطير النافذة */
+  padding-top: max(20px, env(safe-area-inset-top));
+  /* نعطي مسافة من الأعلى */
+  padding-bottom: max(20px, env(safe-area-inset-bottom));
+  overflow-y: auto !important;
+  /* السماح بالتمرير داخل الشاشة بأكملها إذا لزم الأمر */
+}
+
+/* نجعل النافذة نفسها مرنة وقابلة للتقلص */
+.fixed.inset-0.z-50>div {
+  max-height: 100% !important;
+  /* لا تتجاوز أبداً المساحة المتبقية من الشاشة */
+  margin: auto 0;
+  /* التوسيط بطريقة أكثر مرونة */
+}
+
 /* Custom scrollbar */
 ::-webkit-scrollbar {
   width: 4px;
 }
+
 ::-webkit-scrollbar-track {
   @apply bg-bg;
 }
+
 ::-webkit-scrollbar-thumb {
   @apply bg-primary/30 rounded-full;
 }
@@ -96,6 +122,7 @@
   .hide-scrollbar::-webkit-scrollbar {
     display: none;
   }
+
   .hide-scrollbar {
     -ms-overflow-style: none;
     scrollbar-width: none;
