@@ -692,9 +692,16 @@ export default function App() {
   }, [alarmSession, stopAlarm]);
 
   useEffect(() => {
-    if ("Notification" in window && Notification.permission === "default") {
-      Notification.requestPermission();
-    }
+    const initNotifications = async () => {
+      try {
+        await LocalNotifications.requestPermissions();
+      } catch (e) {
+        if ("Notification" in window && Notification.permission === "default") {
+          Notification.requestPermission();
+        }
+      }
+    };
+    initNotifications();
 
     const handleMessage = (event: MessageEvent) => {
       if (event.data?.type === 'ALARM_ACTION') {
@@ -800,28 +807,30 @@ export default function App() {
             notifications: [{
               id: new Date().getTime(),
               title: "🔔 تنبيه: موعد جلسة الآن!",
-              body: `القضية: ${sessionToAlarm.caseTitle}\nالموكل: ${sessionToAlarm.clientName}`,
+              body: `القضية: ${sessionToAlarm.caseTitle}\nاضغط هنا للدخول وسيتوقف رنين المنبه المستمر.`,
               schedule: { at: new Date() },
               sound: "beep.wav",
+              actionTypeId: "ALARM_ACTION"
             }]
           });
-        } catch(e) { console.log('Capacitor Notification failed:', e); }
-
-        // Browser Notification (Fallback)
-        if ("Notification" in window && Notification.permission === "granted") {
-          navigator.serviceWorker.ready.then(registration => {
-            registration.showNotification("🔔 تنبيه: موعد جلسة الآن!", {
-              body: `القضية: ${sessionToAlarm.caseTitle}\nاضغط هنا للدخول وسيتوقف رنين المنبه المستمر.`,
-              icon: "/favicon.ico",
-              requireInteraction: true,
-              silent: true, // We make the notification silent because our custom app sound WILL play!
-              vibrate: [200, 100, 200, 500, 200, 100],
-              actions: [
-                { action: 'enter', title: 'دخول الجلسة وإيقاف الصوت' },
-                { action: 'delay', title: 'تأجيل لمده 5 دقائق' }
-              ]
-            } as any);
-          });
+        } catch(e) {
+          console.log('Capacitor Notification failed:', e);
+          // Browser Notification (Fallback)
+          if ("Notification" in window && Notification.permission === "granted") {
+            navigator.serviceWorker.ready.then(registration => {
+              registration.showNotification("🔔 تنبيه: موعد جلسة الآن!", {
+                body: `القضية: ${sessionToAlarm.caseTitle}\nاضغط هنا للدخول وسيتوقف رنين المنبه المستمر.`,
+                icon: "/favicon.ico",
+                requireInteraction: true,
+                silent: true, // We make the notification silent because our custom app sound WILL play!
+                vibrate: [200, 100, 200, 500, 200, 100],
+                actions: [
+                  { action: 'enter', title: 'دخول الجلسة وإيقاف الصوت' },
+                  { action: 'delay', title: 'تأجيل لمده 5 دقائق' }
+                ]
+              } as any);
+            });
+          }
         }
 
         // Play alarm sound
@@ -843,21 +852,34 @@ export default function App() {
       }
 
       // Task Due Date Notifications
-      if (notifyOnTaskDueDate && "Notification" in window && Notification.permission === "granted") {
+      if (notifyOnTaskDueDate) {
         const todayStr = format(now, 'yyyy-MM-dd');
         cases.forEach(c => {
           (c.tasks || []).forEach(t => {
             if (t.dueDate === todayStr && !t.isCompleted) {
               const taskKey = `task-${t.id}-${todayStr}`;
               if (!triggeredTasks.has(taskKey)) {
-                navigator.serviceWorker.ready.then(registration => {
-                  registration.showNotification("موعد مهمة اليوم!", {
-                    body: `المهمة: ${t.title}\nفي قضية: ${c.title}`,
-                    icon: "/favicon.ico",
-                    vibrate: [100, 50, 100],
-                    tag: taskKey
-                  } as any);
-                });
+                try {
+                  LocalNotifications.schedule({
+                    notifications: [{
+                      id: new Date().getTime() % 100000,
+                      title: "موعد مهمة اليوم!",
+                      body: `المهمة: ${t.title}\nفي قضية: ${c.title}`,
+                      schedule: { at: new Date() },
+                    }]
+                  });
+                } catch(e) {
+                  if ("Notification" in window && Notification.permission === "granted") {
+                    navigator.serviceWorker.ready.then(registration => {
+                      registration.showNotification("موعد مهمة اليوم!", {
+                        body: `المهمة: ${t.title}\nفي قضية: ${c.title}`,
+                        icon: "/favicon.ico",
+                        vibrate: [100, 50, 100],
+                        tag: taskKey
+                      } as any);
+                    });
+                  }
+                }
                 setTriggeredTasks(prev => new Set(prev).add(taskKey));
               }
             }
@@ -907,8 +929,34 @@ export default function App() {
   };
 
   const testNotification = async () => {
+    try {
+      const perm = await LocalNotifications.checkPermissions();
+      if (perm.display === "granted" || (await LocalNotifications.requestPermissions()).display === "granted") {
+        await LocalNotifications.schedule({
+          notifications: [{
+            id: new Date().getTime() % 100000,
+            title: "نظام المحامي الذكي",
+            body: "تم تفعيل الإشعارات بنجاح! ستصلك تنبيهات الجلسات هنا.",
+            schedule: { at: new Date(Date.now() + 1000) }
+          }]
+        });
+        
+        // Force play test sound
+        if (alarmAudioRef.current) {
+          const originalLoop = alarmAudioRef.current.loop;
+          alarmAudioRef.current.loop = false;
+          alarmAudioRef.current.play().then(() => {
+            setTimeout(() => {
+              if (alarmAudioRef.current) alarmAudioRef.current.loop = originalLoop;
+            }, 3000);
+          }).catch(e => console.log('Test sound failed', e));
+        }
+        return;
+      }
+    } catch(e) { console.log('Native notifications not available, falling back to Web API'); }
+
     if (!("Notification" in window)) {
-      alert("هذا المتصفح لا يدعم الإشعارات.");
+      alert("هذا المتصفح أو التطبيق لا يدعم الإشعارات.");
       return;
     }
 
@@ -1075,14 +1123,27 @@ export default function App() {
     }
 
     // Trigger notification if enabled
-    if (notifyOnTaskAssignment && "Notification" in window && Notification.permission === "granted") {
-      navigator.serviceWorker.ready.then(registration => {
-        registration.showNotification("مهمة جديدة مسندة", {
-          body: `تم إسناد مهمة: ${newTask.title}\nفي قضية: ${targetCase?.title || 'غير معروف'}`,
-          icon: "/favicon.ico",
-          vibrate: [100, 50, 100],
-        } as any);
-      });
+    if (notifyOnTaskAssignment) {
+      try {
+        LocalNotifications.schedule({
+          notifications: [{
+            id: new Date().getTime() % 100000,
+            title: "مهمة جديدة مسندة",
+            body: `تم إسناد مهمة: ${newTask.title}\nفي قضية: ${targetCase?.title || 'غير معروف'}`,
+            schedule: { at: new Date() },
+          }]
+        });
+      } catch(e) {
+        if ("Notification" in window && Notification.permission === "granted") {
+          navigator.serviceWorker.ready.then(registration => {
+            registration.showNotification("مهمة جديدة مسندة", {
+              body: `تم إسناد مهمة: ${newTask.title}\nفي قضية: ${targetCase?.title || 'غير معروف'}`,
+              icon: "/favicon.ico",
+              vibrate: [100, 50, 100],
+            } as any);
+          });
+        }
+      }
     }
   };
 

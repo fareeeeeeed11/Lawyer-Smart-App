@@ -12,6 +12,7 @@
  */
 
 import { useState, useEffect } from 'react';
+import { Keyboard, KeyboardResize } from '@capacitor/keyboard';
 
 interface KeyboardState {
   /** True when the on-screen keyboard is visible */
@@ -30,49 +31,94 @@ export function useKeyboardHeight(): KeyboardState {
   });
 
   useEffect(() => {
-    const viewport = window.visualViewport;
+    let showListener: any;
+    let hideListener: any;
 
-    const handleResize = () => {
-      const windowHeight = window.innerHeight;
-      // Use visualViewport.height if available (modern browsers)
-      const currentHeight = viewport ? viewport.height : windowHeight;
-      
-      // Keyboard threshold: if viewport shrinks by more than 20%, keyboard is up
-      const KEYBOARD_THRESHOLD = 0.80;
-      const isKeyboardVisible = currentHeight < windowHeight * KEYBOARD_THRESHOLD;
-      const keyboardHeight = isKeyboardVisible ? windowHeight - currentHeight : 0;
+    const setupKeyboardListeners = async () => {
+      // Set the resize mode at the hook level to guarantee Capacitor behavior
+      try {
+        await Keyboard.setResizeMode({ mode: KeyboardResize.Body });
+      } catch (e) {
+        console.log("Keyboard plugin not fully active (might be web environment)");
+      }
 
-      setState({
-        isKeyboardVisible,
-        viewportHeight: currentHeight,
-        keyboardHeight,
+      showListener = await Keyboard.addListener('keyboardWillShow', info => {
+        const keyboardHeight = info.keyboardHeight;
+        const windowHeight = window.innerHeight;
+        const newViewportHeight = windowHeight - keyboardHeight;
+
+        setState({
+          isKeyboardVisible: true,
+          viewportHeight: newViewportHeight,
+          keyboardHeight: keyboardHeight,
+        });
+
+        const root = document.getElementById('keyboard-root');
+        if (root) {
+          root.style.height = `${newViewportHeight}px`;
+        }
       });
 
-      // *** THE GLOBAL FIX ***
-      // Set the root container height = visible viewport height.
-      // This makes ALL screens automatically avoid the keyboard.
-      const root = document.getElementById('keyboard-root');
-      if (root) {
-        root.style.height = `${currentHeight}px`;
+      hideListener = await Keyboard.addListener('keyboardWillHide', () => {
+        const windowHeight = window.innerHeight;
+        setState({
+          isKeyboardVisible: false,
+          viewportHeight: windowHeight,
+          keyboardHeight: 0,
+        });
+
+        const root = document.getElementById('keyboard-root');
+        if (root) {
+          root.style.height = `${windowHeight}px`;
+        }
+      });
+    };
+
+    setupKeyboardListeners();
+
+    // Fallback for visualViewport (when running on pure web browser)
+    const viewport = window.visualViewport;
+    const handleResize = () => {
+      const windowHeight = window.innerHeight;
+      const currentHeight = viewport ? viewport.height : windowHeight;
+      const KEYBOARD_THRESHOLD = 0.80;
+      
+      // Only apply web fallback if capacitor isn't shrinking the viewport height accurately
+      // and a keyboard seems open.
+      if (currentHeight < windowHeight * KEYBOARD_THRESHOLD) {
+         setState({
+           isKeyboardVisible: true,
+           viewportHeight: currentHeight,
+           keyboardHeight: windowHeight - currentHeight,
+         });
+         const root = document.getElementById('keyboard-root');
+         if (root) {
+           root.style.height = `${currentHeight}px`;
+         }
+      } else if (!state.isKeyboardVisible) {
+        // Safe reset if Capacitor didn't catch it
+        setState(prev => ({
+          ...prev,
+          viewportHeight: currentHeight,
+        }));
+         const root = document.getElementById('keyboard-root');
+         if (root) {
+           root.style.height = `${currentHeight}px`;
+         }
       }
     };
 
-    // Set initial height
-    handleResize();
-
-    // Listen on visualViewport for accurate mobile keyboard detection
     if (viewport) {
       viewport.addEventListener('resize', handleResize);
-      viewport.addEventListener('scroll', handleResize);
     } else {
-      // Fallback for older browsers
       window.addEventListener('resize', handleResize);
     }
 
     return () => {
+      if (showListener) showListener.remove();
+      if (hideListener) hideListener.remove();
       if (viewport) {
         viewport.removeEventListener('resize', handleResize);
-        viewport.removeEventListener('scroll', handleResize);
       } else {
         window.removeEventListener('resize', handleResize);
       }
