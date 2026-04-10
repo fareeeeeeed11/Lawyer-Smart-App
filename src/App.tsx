@@ -1322,7 +1322,7 @@ ${clientsContext}`;
               <input type="email" value={formData.email} onChange={e => setFormData({ ...formData, email: e.target.value })} className="w-full bg-bg border border-border rounded-xl px-4 py-2.5 focus:border-primary focus:outline-none" />
             </div>
             <button onClick={() => onSave(client ? { ...client, ...formData } : formData)} className="w-full bg-primary py-3 rounded-xl font-bold shadow-lg shadow-primary/20 hover:bg-primary/90 transition-all">حفظ البيانات</button>
-            <div className={cn("w-full transition-all duration-300 pointer-events-none md:hidden", isKeyboardOpen ? "h-[45vh]" : "h-0")} />
+            
           </div>
         </motion.div>
       </div>
@@ -1422,7 +1422,7 @@ ${clientsContext}`;
             >
               حفظ الجلسة
             </button>
-            <div className={cn("w-full transition-all duration-300 pointer-events-none md:hidden", isKeyboardOpen ? "h-[45vh]" : "h-0")} />
+            
           </div>
         </motion.div>
       </div>
@@ -1575,7 +1575,7 @@ ${clientsContext}`;
               <span className="font-bold text-danger">{(Number(formData.totalFees) || 0) - (Number(formData.paidFees) || 0)} ريال</span>
             </div>
             <button onClick={handleSubmit} className="w-full bg-primary py-3 rounded-xl font-bold mt-4 shadow-lg shadow-primary/20 hover:bg-primary/90 transition-all">حفظ البيانات</button>
-            <div className={cn("w-full transition-all duration-300 pointer-events-none md:hidden", isKeyboardOpen ? "h-[45vh]" : "h-0")} />
+            
           </div>
         </motion.div>
       </div>
