@@ -1303,7 +1303,14 @@ ${clientsContext}`;
 
     return (
       <div className="fixed inset-0 bg-bg/80 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-        <motion.div initial={{ scale: 0.9, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} className="bg-card border border-border w-full max-w-md rounded-t-3xl md:rounded-3xl overflow-hidden shadow-2xl flex flex-col max-h-full">
+        <motion.div 
+          initial={{ scale: 0.9, opacity: 0 }} 
+          animate={{ scale: 1, opacity: 1 }} 
+          className={cn(
+            "bg-card border border-border w-full max-w-md rounded-t-3xl md:rounded-3xl overflow-hidden shadow-2xl flex flex-col transition-all duration-300",
+            isKeyboardOpen ? "h-[55vh] mt-4 mb-auto" : "max-h-[90vh] md:max-h-full"
+          )}
+        >
           <div className="p-6 border-b border-border flex items-center justify-between shrink-0">
             <h2 className="text-xl font-bold">{client ? 'تعديل بيانات العميل' : 'إضافة عميل جديد'}</h2>
             <button onClick={onClose} className="p-2 hover:bg-white/10 rounded-full"><X size={20} /></button>
@@ -1369,7 +1376,14 @@ ${clientsContext}`;
 
     return (
       <div className="fixed inset-0 bg-bg/80 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-        <motion.div initial={{ scale: 0.9, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} className="bg-card border border-border w-full max-w-md rounded-t-3xl md:rounded-3xl overflow-hidden shadow-2xl flex flex-col max-h-full">
+        <motion.div 
+          initial={{ scale: 0.9, opacity: 0 }} 
+          animate={{ scale: 1, opacity: 1 }} 
+          className={cn(
+            "bg-card border border-border w-full max-w-md rounded-t-3xl md:rounded-3xl overflow-hidden shadow-2xl flex flex-col transition-all duration-300",
+            isKeyboardOpen ? "h-[55vh] mt-4 mb-auto" : "max-h-[90vh] md:max-h-full"
+          )}
+        >
           <div className="p-6 border-b border-border flex items-center justify-between shrink-0">
             <h2 className="text-xl font-bold">{session ? 'تعديل الجلسة' : 'إضافة جلسة جديدة'}</h2>
             <button onClick={onClose} className="p-2 hover:bg-white/10 rounded-full"><X size={20} /></button>
@@ -1495,7 +1509,14 @@ ${clientsContext}`;
 
     return (
       <div className="fixed inset-0 bg-bg/80 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-        <motion.div initial={{ scale: 0.9, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} className="bg-card border border-border w-full max-w-lg rounded-t-3xl md:rounded-3xl overflow-hidden flex flex-col max-h-full">
+        <motion.div 
+          initial={{ scale: 0.9, opacity: 0 }} 
+          animate={{ scale: 1, opacity: 1 }} 
+          className={cn(
+            "bg-card border border-border w-full max-w-lg rounded-t-3xl md:rounded-3xl overflow-hidden flex flex-col transition-all duration-300",
+            isKeyboardOpen ? "h-[55vh] mt-4 mb-auto" : "max-h-[90vh] md:max-h-full"
+          )}
+        >
           <div className="p-6 border-b border-border flex items-center justify-between shrink-0">
             <h2 className="text-xl font-bold">{caseData ? 'تعديل القضية' : 'إضافة قضية جديدة'}</h2>
             <button onClick={onClose} className="p-2 hover:bg-white/10 rounded-full"><X size={20} /></button>
@@ -4637,7 +4658,10 @@ const AccountStatementsView = ({
               initial={{ scale: 0.9, opacity: 0 }}
               animate={{ scale: 1, opacity: 1 }}
               exit={{ scale: 0.9, opacity: 0 }}
-              className="bg-card border border-border w-full max-w-md rounded-t-3xl md:rounded-3xl overflow-hidden shadow-2xl flex flex-col max-h-full"
+              className={cn(
+                "bg-card border border-border w-full max-w-md rounded-t-3xl md:rounded-3xl overflow-hidden shadow-2xl flex flex-col transition-all duration-300",
+                document.documentElement.clientHeight < window.innerHeight * 0.7 ? "h-[55vh] mt-4 mb-auto" : "max-h-[90vh] md:max-h-full"
+              )}
             >
               <div className="p-6 border-b border-border flex items-center justify-between shrink-0">
                 <h2 className="text-xl font-bold flex items-center gap-2">
