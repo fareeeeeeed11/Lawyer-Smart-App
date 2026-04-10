@@ -34,11 +34,11 @@ jobs:
         run: npx cap sync android
 
       # 6. Setup Java (Required for Android build)
-      - name: Setup Java 17
+      - name: Setup Java 21
         uses: actions/setup-java@v4
         with:
           distribution: 'zulu'
-          java-version: '17'
+          java-version: '21'
 
       # 7. Setup permissions for gradlew script
       - name: Make gradlew Executable
