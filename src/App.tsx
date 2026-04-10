@@ -1303,7 +1303,7 @@ ${clientsContext}`;
 
     return (
       <div className="fixed inset-0 bg-bg/80 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-        <motion.div initial={{ scale: 0.9, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} className="bg-card border border-border w-full max-w-md rounded-t-3xl md:rounded-3xl overflow-hidden shadow-2xl flex flex-col h-[90vh] md:h-auto">
+        <motion.div initial={{ scale: 0.9, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} className="bg-card border border-border w-full max-w-md rounded-t-3xl md:rounded-3xl overflow-hidden shadow-2xl flex flex-col max-h-full">
           <div className="p-6 border-b border-border flex items-center justify-between shrink-0">
             <h2 className="text-xl font-bold">{client ? 'تعديل بيانات العميل' : 'إضافة عميل جديد'}</h2>
             <button onClick={onClose} className="p-2 hover:bg-white/10 rounded-full"><X size={20} /></button>
@@ -1369,7 +1369,7 @@ ${clientsContext}`;
 
     return (
       <div className="fixed inset-0 bg-bg/80 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-        <motion.div initial={{ scale: 0.9, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} className="bg-card border border-border w-full max-w-md rounded-t-3xl md:rounded-3xl overflow-hidden shadow-2xl flex flex-col h-[90vh] md:h-auto">
+        <motion.div initial={{ scale: 0.9, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} className="bg-card border border-border w-full max-w-md rounded-t-3xl md:rounded-3xl overflow-hidden shadow-2xl flex flex-col max-h-full">
           <div className="p-6 border-b border-border flex items-center justify-between shrink-0">
             <h2 className="text-xl font-bold">{session ? 'تعديل الجلسة' : 'إضافة جلسة جديدة'}</h2>
             <button onClick={onClose} className="p-2 hover:bg-white/10 rounded-full"><X size={20} /></button>
@@ -1495,7 +1495,7 @@ ${clientsContext}`;
 
     return (
       <div className="fixed inset-0 bg-bg/80 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-        <motion.div initial={{ scale: 0.9, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} className="bg-card border border-border w-full max-w-lg rounded-t-3xl md:rounded-3xl overflow-hidden flex flex-col h-[90vh] md:h-auto">
+        <motion.div initial={{ scale: 0.9, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} className="bg-card border border-border w-full max-w-lg rounded-t-3xl md:rounded-3xl overflow-hidden flex flex-col max-h-full">
           <div className="p-6 border-b border-border flex items-center justify-between shrink-0">
             <h2 className="text-xl font-bold">{caseData ? 'تعديل القضية' : 'إضافة قضية جديدة'}</h2>
             <button onClick={onClose} className="p-2 hover:bg-white/10 rounded-full"><X size={20} /></button>
@@ -3790,27 +3790,27 @@ const ProfileView = ({ profile, onUpdate }: { profile: LawyerProfile, onUpdate: 
               <div className="flex justify-center gap-4 border-t border-white/5 pt-6">
                 <div className="text-center">
                   {isEditing ? (
-                    <input type="text" value={formData.stats?.casesCount || "124"} onChange={e => setFormData({...formData, stats: {...formData.stats, casesCount: e.target.value} as any})} className="w-16 text-center bg-bg border border-border rounded-lg text-lg font-bold outline-none focus:border-primary" />
+                    <input type="text" value={formData.stats?.casesCount ?? "124"} onChange={e => setFormData({...formData, stats: {...formData.stats, casesCount: e.target.value} as any})} className="w-16 text-center bg-bg border border-border rounded-lg text-lg font-bold outline-none focus:border-primary" />
                   ) : (
-                    <p className="text-lg font-bold">{formData.stats?.casesCount || "124"}</p>
+                    <p className="text-lg font-bold">{formData.stats?.casesCount ?? "124"}</p>
                   )}
                   <p className="text-[10px] text-white/40 uppercase tracking-wider">قضية</p>
                 </div>
                 <div className="w-px h-8 bg-white/5 self-center" />
                 <div className="text-center">
                   {isEditing ? (
-                    <input type="text" value={formData.stats?.successRate || "98%"} onChange={e => setFormData({...formData, stats: {...formData.stats, successRate: e.target.value} as any})} className="w-16 text-center bg-bg border border-border rounded-lg text-lg font-bold outline-none focus:border-primary" />
+                    <input type="text" value={formData.stats?.successRate ?? "98%"} onChange={e => setFormData({...formData, stats: {...formData.stats, successRate: e.target.value} as any})} className="w-16 text-center bg-bg border border-border rounded-lg text-lg font-bold outline-none focus:border-primary" />
                   ) : (
-                    <p className="text-lg font-bold">{formData.stats?.successRate || "98%"}</p>
+                    <p className="text-lg font-bold">{formData.stats?.successRate ?? "98%"}</p>
                   )}
                   <p className="text-[10px] text-white/40 uppercase tracking-wider">نجاح</p>
                 </div>
                 <div className="w-px h-8 bg-white/5 self-center" />
                 <div className="text-center">
                   {isEditing ? (
-                    <input type="text" value={formData.stats?.years || "10+"} onChange={e => setFormData({...formData, stats: {...formData.stats, years: e.target.value} as any})} className="w-16 text-center bg-bg border border-border rounded-lg text-lg font-bold outline-none focus:border-primary" />
+                    <input type="text" value={formData.stats?.years ?? "10+"} onChange={e => setFormData({...formData, stats: {...formData.stats, years: e.target.value} as any})} className="w-16 text-center bg-bg border border-border rounded-lg text-lg font-bold outline-none focus:border-primary" />
                   ) : (
-                    <p className="text-lg font-bold">{formData.stats?.years || "10+"}</p>
+                    <p className="text-lg font-bold">{formData.stats?.years ?? "10+"}</p>
                   )}
                   <p className="text-[10px] text-white/40 uppercase tracking-wider">سنوات</p>
                 </div>
@@ -3991,33 +3991,33 @@ const ProfileView = ({ profile, onUpdate }: { profile: LawyerProfile, onUpdate: 
                 <div className="p-4 bg-white/5 rounded-2xl text-center">
                   <p className="text-xs text-white/40 mb-1">القضايا المربوحة</p>
                   {isEditing ? (
-                    <input type="text" value={formData.stats?.wonCases || "92"} onChange={e => setFormData({...formData, stats: {...formData.stats, wonCases: e.target.value} as any})} className="w-full text-center bg-bg border border-border rounded-lg text-xl font-bold text-success outline-none focus:border-success py-1" />
+                    <input type="text" value={formData.stats?.wonCases ?? "92"} onChange={e => setFormData({...formData, stats: {...formData.stats, wonCases: e.target.value} as any})} className="w-full text-center bg-bg border border-border rounded-lg text-xl font-bold text-success outline-none focus:border-success py-1" />
                   ) : (
-                    <p className="text-xl font-bold text-success">{formData.stats?.wonCases || "92"}</p>
+                    <p className="text-xl font-bold text-success">{formData.stats?.wonCases ?? "92"}</p>
                   )}
                 </div>
                 <div className="p-4 bg-white/5 rounded-2xl text-center">
                   <p className="text-xs text-white/40 mb-1">قيد التنفيذ</p>
                   {isEditing ? (
-                    <input type="text" value={formData.stats?.activeCases || "18"} onChange={e => setFormData({...formData, stats: {...formData.stats, activeCases: e.target.value} as any})} className="w-full text-center bg-bg border border-border rounded-lg text-xl font-bold text-primary outline-none focus:border-primary py-1" />
+                    <input type="text" value={formData.stats?.activeCases ?? "18"} onChange={e => setFormData({...formData, stats: {...formData.stats, activeCases: e.target.value} as any})} className="w-full text-center bg-bg border border-border rounded-lg text-xl font-bold text-primary outline-none focus:border-primary py-1" />
                   ) : (
-                    <p className="text-xl font-bold text-primary">{formData.stats?.activeCases || "18"}</p>
+                    <p className="text-xl font-bold text-primary">{formData.stats?.activeCases ?? "18"}</p>
                   )}
                 </div>
                 <div className="p-4 bg-white/5 rounded-2xl text-center">
                   <p className="text-xs text-white/40 mb-1">ساعات المرافعة</p>
                   {isEditing ? (
-                    <input type="text" value={formData.stats?.hoursLogged || "1,240"} onChange={e => setFormData({...formData, stats: {...formData.stats, hoursLogged: e.target.value} as any})} className="w-full text-center bg-bg border border-border rounded-lg text-xl font-bold text-accent outline-none focus:border-accent py-1" />
+                    <input type="text" value={formData.stats?.hoursLogged ?? "1,240"} onChange={e => setFormData({...formData, stats: {...formData.stats, hoursLogged: e.target.value} as any})} className="w-full text-center bg-bg border border-border rounded-lg text-xl font-bold text-accent outline-none focus:border-accent py-1" />
                   ) : (
-                    <p className="text-xl font-bold text-accent">{formData.stats?.hoursLogged || "1,240"}</p>
+                    <p className="text-xl font-bold text-accent">{formData.stats?.hoursLogged ?? "1,240"}</p>
                   )}
                 </div>
                 <div className="p-4 bg-white/5 rounded-2xl text-center">
                   <p className="text-xs text-white/40 mb-1">رضا العملاء</p>
                   {isEditing ? (
-                    <input type="text" value={formData.stats?.clientSatisfaction || "4.9/5"} onChange={e => setFormData({...formData, stats: {...formData.stats, clientSatisfaction: e.target.value} as any})} className="w-full text-center bg-bg border border-border rounded-lg text-xl font-bold text-secondary outline-none focus:border-secondary py-1" />
+                    <input type="text" value={formData.stats?.clientSatisfaction ?? "4.9/5"} onChange={e => setFormData({...formData, stats: {...formData.stats, clientSatisfaction: e.target.value} as any})} className="w-full text-center bg-bg border border-border rounded-lg text-xl font-bold text-secondary outline-none focus:border-secondary py-1" />
                   ) : (
-                    <p className="text-xl font-bold text-secondary">{formData.stats?.clientSatisfaction || "4.9/5"}</p>
+                    <p className="text-xl font-bold text-secondary">{formData.stats?.clientSatisfaction ?? "4.9/5"}</p>
                   )}
                 </div>
               </div>
@@ -4637,7 +4637,7 @@ const AccountStatementsView = ({
               initial={{ scale: 0.9, opacity: 0 }}
               animate={{ scale: 1, opacity: 1 }}
               exit={{ scale: 0.9, opacity: 0 }}
-              className="bg-card border border-border w-full max-w-md rounded-t-3xl md:rounded-3xl overflow-hidden shadow-2xl flex flex-col h-[90vh] md:h-auto"
+              className="bg-card border border-border w-full max-w-md rounded-t-3xl md:rounded-3xl overflow-hidden shadow-2xl flex flex-col max-h-full"
             >
               <div className="p-6 border-b border-border flex items-center justify-between shrink-0">
                 <h2 className="text-xl font-bold flex items-center gap-2">
