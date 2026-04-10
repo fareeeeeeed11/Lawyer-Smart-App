@@ -3691,7 +3691,7 @@ const AIView = ({ messages, input, setInput, handleSendMessage, isTyping, isKeyb
         <p className="text-[10px] text-center text-white/20 mt-3">
           المستشار الذكي قد يخطئ، يرجى مراجعة الاستشارات الهامة.
         </p>
-        <div className={cn("w-full transition-all duration-300 pointer-events-none md:hidden", isKeyboardOpen ? "h-6" : "h-0")} />
+        
       </div>
     </div>
   );
