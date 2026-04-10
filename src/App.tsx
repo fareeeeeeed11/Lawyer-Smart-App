@@ -1302,36 +1302,36 @@ ${clientsContext}`;
     });
 
     return (
-      <div className="fixed inset-0 bg-bg/80 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-        <motion.div 
-          initial={{ scale: 0.9, opacity: 0 }} 
-          animate={{ scale: 1, opacity: 1 }} 
-          className={cn(
-            "bg-card border border-border w-full max-w-md rounded-t-3xl md:rounded-3xl overflow-hidden shadow-2xl flex flex-col transition-all duration-300",
-            isKeyboardOpen ? "h-[55vh] mt-4 mb-auto" : "max-h-[90vh] md:max-h-full"
-          )}
-        >
-          <div className="p-6 border-b border-border flex items-center justify-between shrink-0">
-            <h2 className="text-xl font-bold">{client ? 'تعديل بيانات العميل' : 'إضافة عميل جديد'}</h2>
-            <button onClick={onClose} className="p-2 hover:bg-white/10 rounded-full"><X size={20} /></button>
+      /* لاحظ هنا: شلنا التوسيط والشفافية، وصارت شاشة كاملة صلبة تغطي التطبيق 100% */
+      <div className="fixed inset-0 bg-bg z-[100] overflow-y-auto flex flex-col w-full h-full">
+        
+        {/* شريط علوي ثابت للشاشة الجديدة */}
+        <div className="p-5 border-b border-border flex items-center justify-between shrink-0 bg-card sticky top-0 z-10 shadow-lg">
+          <h2 className="text-xl font-bold">{client ? 'تعديل بيانات العميل' : 'إضافة عميل جديد'}</h2>
+          <button onClick={onClose} className="p-2 bg-white/5 hover:bg-danger/20 hover:text-danger rounded-full transition-all">
+            <X size={24} />
+          </button>
+        </div>
+        
+        {/* منطقة المحتوى القابلة للتمرير براحة تامة */}
+        <div className="p-6 space-y-6 flex-1 pb-32"> 
+          <div className="space-y-2">
+            <label className="text-sm font-bold text-white/70">الاسم الكامل</label>
+            <input type="text" value={formData.name} onChange={e => setFormData({ ...formData, name: e.target.value })} className="w-full bg-black/20 border border-white/10 rounded-xl px-4 py-4 focus:border-primary focus:bg-white/5 transition-all outline-none" />
           </div>
-          <div className="p-6 space-y-4 flex-1 overflow-y-auto">
-            <div className="space-y-1">
-              <label className="text-xs text-white/50 pr-1">الاسم الكامل</label>
-              <input type="text" value={formData.name} onChange={e => setFormData({ ...formData, name: e.target.value })} className="w-full bg-bg border border-border rounded-xl px-4 py-2.5 focus:border-primary focus:outline-none" />
-            </div>
-            <div className="space-y-1">
-              <label className="text-xs text-white/50 pr-1">رقم الهاتف</label>
-              <input type="text" value={formData.phone} onChange={e => setFormData({ ...formData, phone: e.target.value })} className="w-full bg-bg border border-border rounded-xl px-4 py-2.5 focus:border-primary focus:outline-none" />
-            </div>
-            <div className="space-y-1">
-              <label className="text-xs text-white/50 pr-1">البريد الإلكتروني</label>
-              <input type="email" value={formData.email} onChange={e => setFormData({ ...formData, email: e.target.value })} className="w-full bg-bg border border-border rounded-xl px-4 py-2.5 focus:border-primary focus:outline-none" />
-            </div>
-            <button onClick={() => onSave(client ? { ...client, ...formData } : formData)} className="w-full bg-primary py-3 rounded-xl font-bold shadow-lg shadow-primary/20 hover:bg-primary/90 transition-all">حفظ البيانات</button>
-            
+          <div className="space-y-2">
+            <label className="text-sm font-bold text-white/70">رقم الهاتف</label>
+            <input type="tel" value={formData.phone} onChange={e => setFormData({ ...formData, phone: e.target.value })} className="w-full bg-black/20 border border-white/10 rounded-xl px-4 py-4 focus:border-primary focus:bg-white/5 transition-all outline-none" dir="ltr" />
           </div>
-        </motion.div>
+          <div className="space-y-2">
+            <label className="text-sm font-bold text-white/70">البريد الإلكتروني</label>
+            <input type="email" value={formData.email} onChange={e => setFormData({ ...formData, email: e.target.value })} className="w-full bg-black/20 border border-white/10 rounded-xl px-4 py-4 focus:border-primary focus:bg-white/5 transition-all outline-none" dir="ltr" />
+          </div>
+          
+          <button onClick={() => onSave(client ? { ...client, ...formData } : formData)} className="w-full bg-primary py-4 rounded-xl font-bold shadow-lg shadow-primary/20 hover:bg-primary/90 transition-all text-lg mt-8">
+            حفظ البيانات
+          </button>
+        </div>
       </div>
     );
   };
