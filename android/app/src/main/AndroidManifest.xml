@@ -36,8 +36,30 @@
         </provider>
     </application>
 
+    <!-- Required for all Android versions -->
     <uses-permission android:name="android.permission.INTERNET" />
+
+    <!--
+        POST_NOTIFICATIONS is ONLY required on Android 13+ (API 33+).
+        On Android 10 (API 29) and below, notification permission is granted
+        automatically and this permission tag does nothing but clutter the
+        permissions screen. Using maxSdkVersion is wrong practice here;
+        the correct fix is just to let Capacitor's LocalNotifications
+        requestPermissions() handle it at runtime gracefully.
+    -->
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
+
+    <!--
+        SCHEDULE_EXACT_ALARM is for scheduling precise alarms.
+        On Android 12+, this may require user approval in settings.
+        On Android 10, it's granted automatically.
+    -->
     <uses-permission android:name="android.permission.SCHEDULE_EXACT_ALARM" />
+
+    <!-- USE_EXACT_ALARM is for Android 13+ only - apps with specific use cases -->
     <uses-permission android:name="android.permission.USE_EXACT_ALARM" />
+
+    <!-- Required to receive alarms/broadcasts even when app is in background -->
+    <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
+
 </manifest>

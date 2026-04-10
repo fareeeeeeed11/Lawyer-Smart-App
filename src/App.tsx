@@ -322,10 +322,11 @@ export default function App() {
   };
 
   // ============================================================
-  // GLOBAL KEYBOARD-AWARE LAYOUT (Modern visualViewport approach)
-  // The hook fires on ALL screens simultaneously — no per-screen fixes needed.
+  // KEYBOARD STATE TRACKING (Capacitor Native Events)
+  // Strategy: Android OS handles ALL resizing via adjustResize in AndroidManifest.
+  // This hook ONLY tracks show/hide state — zero DOM/height manipulation.
   // ============================================================
-  const { isKeyboardVisible: isKeyboardOpen, viewportHeight, keyboardHeight } = useKeyboardHeight();
+  const { isKeyboardVisible: isKeyboardOpen } = useKeyboardHeight();
 
   // API key state — reads from localStorage first, then .env fallback
   const [geminiApiKey, setGeminiApiKey] = useState<string>(() => {
@@ -991,11 +992,13 @@ export default function App() {
     setShowWelcome(false);
     
     try {
-      if ("Notification" in window) {
-        await Notification.requestPermission();
-      }
-      await LocalNotifications.requestPermissions();
-    } catch (e) { console.log('Notification permission request failed:', e); }
+      // LocalNotifications.requestPermissions() handles ALL Android versions gracefully:
+      // - Android 10 (API 29): Permission is granted by default, returns 'granted' instantly.
+      // - Android 13+ (API 33): Shows the native OS permission dialog.
+      // We do NOT call web Notification.requestPermission() which fails in APK WebViews.
+      const permResult = await LocalNotifications.requestPermissions();
+      console.log('Notification permission result:', permResult.display);
+    } catch (e) { console.log('LocalNotifications.requestPermissions() failed:', e); }
     
     // Use a silent beep to unlock the context immediately and reliably
     const unlockAudio = new Audio(SILENT_BEEP);
@@ -1975,7 +1978,6 @@ ${clientsContext}`;
                 "md:pr-64 p-4 md:p-6 transition-all duration-300 flex flex-col w-full overflow-y-auto",
                 isKeyboardOpen ? "pb-2" : "pb-24"
               )}
-              style={{ height: `${viewportHeight}px`, overflowY: 'auto' }}
             >
               <div className="max-w-7xl mx-auto w-full flex-1 flex flex-col relative z-30">
                 <div className="justify-end items-center gap-3 mb-4 shrink-0 hidden md:flex">
