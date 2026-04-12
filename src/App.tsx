@@ -1294,315 +1294,6 @@ ${clientsContext}`;
   // Handlers
 
 
-  const ClientModal = ({ client, onClose, onSave }: { client?: Client | null, onClose: () => void, onSave: (c: any) => void }) => {
-    const [formData, setFormData] = useState({
-      name: client?.name || '',
-      phone: client?.phone || '',
-      email: client?.email || '',
-    });
-
-    return (
-      /* لاحظ هنا: شلنا التوسيط والشفافية، وصارت شاشة كاملة صلبة تغطي التطبيق 100% */
-      <div className="fixed inset-0 bg-bg z-[100] overflow-y-auto flex flex-col w-full h-full">
-        
-        {/* شريط علوي ثابت للشاشة الجديدة */}
-        <div className="p-5 border-b border-border flex items-center justify-between shrink-0 bg-card sticky top-0 z-10 shadow-lg">
-          <h2 className="text-xl font-bold">{client ? 'تعديل بيانات العميل' : 'إضافة عميل جديد'}</h2>
-          <button onClick={onClose} className="p-2 bg-white/5 hover:bg-danger/20 hover:text-danger rounded-full transition-all">
-            <X size={24} />
-          </button>
-        </div>
-        
-        {/* منطقة المحتوى القابلة للتمرير براحة تامة */}
-        <div className="p-6 space-y-6 flex-1 pb-32"> 
-          <div className="space-y-2">
-            <label className="text-sm font-bold text-white/70">الاسم الكامل</label>
-            <input type="text" value={formData.name} onChange={e => setFormData({ ...formData, name: e.target.value })} className="w-full bg-black/20 border border-white/10 rounded-xl px-4 py-4 focus:border-primary focus:bg-white/5 transition-all outline-none" />
-          </div>
-          <div className="space-y-2">
-            <label className="text-sm font-bold text-white/70">رقم الهاتف</label>
-            <input type="tel" value={formData.phone} onChange={e => setFormData({ ...formData, phone: e.target.value })} className="w-full bg-black/20 border border-white/10 rounded-xl px-4 py-4 focus:border-primary focus:bg-white/5 transition-all outline-none" dir="ltr" />
-          </div>
-          <div className="space-y-2">
-            <label className="text-sm font-bold text-white/70">البريد الإلكتروني</label>
-            <input type="email" value={formData.email} onChange={e => setFormData({ ...formData, email: e.target.value })} className="w-full bg-black/20 border border-white/10 rounded-xl px-4 py-4 focus:border-primary focus:bg-white/5 transition-all outline-none" dir="ltr" />
-          </div>
-          
-          <button onClick={() => onSave(client ? { ...client, ...formData } : formData)} className="w-full bg-primary py-4 rounded-xl font-bold shadow-lg shadow-primary/20 hover:bg-primary/90 transition-all text-lg mt-8">
-            حفظ البيانات
-          </button>
-        </div>
-      </div>
-    );
-  };
-
-  const SessionModal = ({ session, onClose, onSave }: { session?: Session | null, onClose: () => void, onSave: (s: any) => void }) => {
-    const [formData, setFormData] = useState({
-      caseId: session?.caseId || '',
-      caseTitle: session?.caseTitle || '',
-      clientId: session?.clientId || '',
-      clientName: session?.clientName || '',
-      clientPhone: session?.clientPhone || '',
-      clientEmail: session?.clientEmail || '',
-      date: session?.date || format(new Date(), 'yyyy-MM-dd'),
-      time: session?.time || '09:00',
-      description: session?.description || '',
-    });
-
-    const handleCaseSelect = (caseId: string) => {
-      const selected = cases.find(c => c.id === caseId);
-      if (selected) {
-        setFormData({
-          ...formData,
-          caseId: selected.id,
-          caseTitle: selected.title,
-          clientId: selected.clientId,
-          clientName: selected.clientName,
-          clientPhone: selected.clientPhone,
-          clientEmail: selected.clientEmail || '',
-        });
-      } else {
-        setFormData({
-          ...formData,
-          caseId: '',
-          caseTitle: '',
-          clientId: '',
-          clientName: '',
-          clientPhone: '',
-          clientEmail: '',
-        });
-      }
-    };
-
-    return (
-      <div className="fixed inset-0 bg-bg/80 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-        <motion.div 
-          initial={{ scale: 0.9, opacity: 0 }} 
-          animate={{ scale: 1, opacity: 1 }} 
-          className={cn(
-            "bg-card border border-border w-full max-w-md rounded-t-3xl md:rounded-3xl overflow-hidden shadow-2xl flex flex-col transition-all duration-300",
-            isKeyboardOpen ? "h-[55vh] mt-4 mb-auto" : "max-h-[90vh] md:max-h-full"
-          )}
-        >
-          <div className="p-6 border-b border-border flex items-center justify-between shrink-0">
-            <h2 className="text-xl font-bold">{session ? 'تعديل الجلسة' : 'إضافة جلسة جديدة'}</h2>
-            <button onClick={onClose} className="p-2 hover:bg-white/10 rounded-full"><X size={20} /></button>
-          </div>
-          <div className="p-6 space-y-4 flex-1 overflow-y-auto">
-            <div className="space-y-1">
-              <label className="text-xs text-white/50 pr-1">اختر القضية</label>
-              <select 
-                value={formData.caseId} 
-                onChange={e => handleCaseSelect(e.target.value)} 
-                className="w-full bg-bg border border-border rounded-xl px-4 py-2.5 focus:border-primary focus:outline-none"
-              >
-                <option value="">-- اختر القضية --</option>
-                {cases.map(c => (
-                  <option key={c.id} value={c.id}>{c.title} (موكل: {c.clientName})</option>
-                ))}
-              </select>
-            </div>
-            
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div className="space-y-1">
-                <label className="text-xs text-white/50 pr-1">التاريخ</label>
-                <input type="date" value={formData.date} onChange={e => setFormData({ ...formData, date: e.target.value })} className="w-full bg-bg border border-border rounded-xl px-4 py-2.5 focus:border-primary focus:outline-none" />
-              </div>
-              <div className="space-y-1">
-                <label className="text-xs text-white/50 pr-1">الوقت</label>
-                <input type="time" value={formData.time} onChange={e => setFormData({ ...formData, time: e.target.value })} className="w-full bg-bg border border-border rounded-xl px-4 py-2.5 focus:border-primary focus:outline-none" />
-              </div>
-            </div>
-
-            <div className="bg-white/5 p-4 rounded-2xl border border-white/5 space-y-2">
-              <p className="text-xs text-white/40">بيانات الموكل (تلقائي):</p>
-              <div className="flex justify-between items-center">
-                <span className="text-sm font-bold">{formData.clientName || '---'}</span>
-                <span className="text-xs text-white/50">{formData.clientPhone || '---'}</span>
-              </div>
-            </div>
-
-            <div className="space-y-1">
-              <label className="text-xs text-white/50 pr-1">الوصف</label>
-              <textarea value={formData.description} onChange={e => setFormData({ ...formData, description: e.target.value })} className="w-full bg-bg border border-border rounded-xl px-4 py-2.5 focus:border-primary focus:outline-none h-24" placeholder="اكتب تفاصيل الجلسة هنا..." />
-            </div>
-            <button 
-              onClick={() => onSave(session ? { ...session, ...formData } : formData)} 
-              disabled={!formData.caseId}
-              className={cn(
-                "w-full py-3 rounded-xl font-bold shadow-lg transition-all",
-                formData.caseId ? "bg-primary shadow-primary/20 hover:bg-primary/90" : "bg-white/10 text-white/30 cursor-not-allowed"
-              )}
-            >
-              حفظ الجلسة
-            </button>
-            
-          </div>
-        </motion.div>
-      </div>
-    );
-  };
-
-  const CaseModal = ({ caseData, onClose, onSave }: { caseData?: Case | null, onClose: () => void, onSave: (c: any) => void }) => {
-    const [formData, setFormData] = useState({
-      title: caseData?.title || '',
-      type: caseData?.type || 'جنائية',
-      court: caseData?.court || '',
-      clientName: caseData?.clientName || '',
-      clientPhone: caseData?.clientPhone || '',
-      clientEmail: caseData?.clientEmail || '',
-      totalFees: caseData?.totalFees || '',
-      paidFees: caseData?.paidFees || '',
-      priority: caseData?.priority || 'متوسطة',
-    });
-    const [suggestedClients, setSuggestedClients] = useState<Client[]>([]);
-
-    const handleClientInput = (val: string) => {
-      setFormData({ ...formData, clientName: val });
-      if (val.trim()) {
-        const matches = clients.filter(c => c.name.includes(val));
-        setSuggestedClients(matches);
-      } else {
-        setSuggestedClients([]);
-      }
-    };
-
-    const selectClient = (c: Client) => {
-      setFormData({ ...formData, clientName: c.name, clientPhone: c.phone, clientEmail: c.email || '' });
-      setSuggestedClients([]);
-    };
-
-    const handleSubmit = () => {
-      if (caseData) {
-        onSave({ 
-          ...caseData, 
-          ...formData, 
-          totalFees: Number(formData.totalFees),
-          paidFees: Number(formData.paidFees),
-          priority: formData.priority as any
-        });
-      } else {
-        const newCase: Case = {
-          id: Math.random().toString(36).substr(2, 9),
-          caseNumber: (cases.length + 1).toString(),
-          title: formData.title,
-          type: formData.type,
-          court: formData.court,
-          clientId: 'custom',
-          clientName: formData.clientName,
-          clientPhone: formData.clientPhone,
-          clientEmail: formData.clientEmail,
-          status: 'نشطة',
-          startDate: format(new Date(), 'yyyy-MM-dd'),
-          totalFees: Number(formData.totalFees),
-          paidFees: Number(formData.paidFees) || 0,
-          progress: 0,
-          priority: formData.priority as any,
-          timeline: [
-            { id: 't1', date: format(new Date(), 'yyyy-MM-dd'), title: 'تم استلام القضية', description: 'بدء العمل على ملف القضية', isCompleted: true }
-          ],
-          tasks: []
-        };
-        onSave(newCase);
-      }
-    };
-
-    return (
-      <div className="fixed inset-0 bg-bg/80 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-        <motion.div 
-          initial={{ scale: 0.9, opacity: 0 }} 
-          animate={{ scale: 1, opacity: 1 }} 
-          className={cn(
-            "bg-card border border-border w-full max-w-lg rounded-t-3xl md:rounded-3xl overflow-hidden flex flex-col transition-all duration-300",
-            isKeyboardOpen ? "h-[55vh] mt-4 mb-auto" : "max-h-[90vh] md:max-h-full"
-          )}
-        >
-          <div className="p-6 border-b border-border flex items-center justify-between shrink-0">
-            <h2 className="text-xl font-bold">{caseData ? 'تعديل القضية' : 'إضافة قضية جديدة'}</h2>
-            <button onClick={onClose} className="p-2 hover:bg-white/10 rounded-full"><X size={20} /></button>
-          </div>
-          <div className="p-6 space-y-4 flex-1 overflow-y-auto">
-            <div className="space-y-1">
-              <label className="text-xs text-white/50 pr-1">عنوان القضية</label>
-              <input type="text" value={formData.title} onChange={(e) => setFormData({ ...formData, title: e.target.value })} className="w-full bg-bg border border-border rounded-xl px-4 py-2.5 focus:border-primary focus:outline-none" />
-            </div>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div className="space-y-1">
-                <label className="text-xs text-white/50 pr-1">نوع القضية</label>
-                <select value={formData.type} onChange={(e) => setFormData({ ...formData, type: e.target.value })} className="w-full bg-bg border border-border rounded-xl px-4 py-2.5 focus:border-primary focus:outline-none">
-                  <option value="جنائية">جنائية</option>
-                  <option value="مدنية">مدنية</option>
-                  <option value="أحوال شخصية">أحوال شخصية</option>
-                  <option value="تجارية">تجارية</option>
-                </select>
-              </div>
-              <div className="space-y-1">
-                <label className="text-xs text-white/50 pr-1">المحكمة</label>
-                <input type="text" value={formData.court} onChange={(e) => setFormData({ ...formData, court: e.target.value })} className="w-full bg-bg border border-border rounded-xl px-4 py-2.5 focus:border-primary focus:outline-none" />
-              </div>
-            </div>
-            <div className="space-y-1 relative">
-              <label className="text-xs text-white/50 pr-1">اسم الموكل</label>
-              <input type="text" value={formData.clientName} onChange={(e) => handleClientInput(e.target.value)} className="w-full bg-bg border border-border rounded-xl px-4 py-2.5 focus:border-primary focus:outline-none" />
-              {suggestedClients.length > 0 && (
-                <div className="absolute top-full right-0 left-0 bg-card border border-border rounded-xl mt-1 z-10 shadow-xl overflow-hidden">
-                  {suggestedClients.map(c => (
-                    <button key={c.id} onClick={() => selectClient(c)} className="w-full text-right px-4 py-2 hover:bg-primary/10 text-sm transition-colors">{c.name} - {c.phone}</button>
-                  ))}
-                </div>
-              )}
-            </div>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div className="space-y-1">
-                <label className="text-xs text-white/50 pr-1">رقم الهاتف</label>
-                <input type="text" value={formData.clientPhone} onChange={(e) => setFormData({ ...formData, clientPhone: e.target.value })} className="w-full bg-bg border border-border rounded-xl px-4 py-2.5 focus:border-primary focus:outline-none" />
-              </div>
-              <div className="space-y-1">
-                <label className="text-xs text-white/50 pr-1">البريد الإلكتروني</label>
-                <input type="email" value={formData.clientEmail} onChange={(e) => setFormData({ ...formData, clientEmail: e.target.value })} className="w-full bg-bg border border-border rounded-xl px-4 py-2.5 focus:border-primary focus:outline-none" />
-              </div>
-            </div>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div className="space-y-1">
-                <label className="text-xs text-white/50 pr-1">الأولوية</label>
-                <select 
-                  value={formData.priority} 
-                  onChange={(e) => setFormData({ ...formData, priority: e.target.value as any })} 
-                  className="w-full bg-bg border border-border rounded-xl px-4 py-2.5 focus:border-primary focus:outline-none"
-                >
-                  <option value="عالية">عالية</option>
-                  <option value="متوسطة">متوسطة</option>
-                  <option value="منخفضة">منخفضة</option>
-                </select>
-              </div>
-              <div className="space-y-1">
-                <label className="text-xs text-white/50 pr-1">تاريخ البدء</label>
-                <input type="date" value={formData.startDate} onChange={(e) => setFormData({ ...formData, startDate: e.target.value })} className="w-full bg-bg border border-border rounded-xl px-4 py-2.5 focus:border-primary focus:outline-none" />
-              </div>
-            </div>
-
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div className="space-y-1">
-                <label className="text-xs text-white/50 pr-1">إجمالي الأتعاب</label>
-                <input type="number" value={formData.totalFees} onChange={(e) => setFormData({ ...formData, totalFees: e.target.value })} className="w-full bg-bg border border-border rounded-xl px-4 py-2.5 focus:border-primary focus:outline-none" />
-              </div>
-              <div className="space-y-1">
-                <label className="text-xs text-white/50 pr-1">المبلغ المدفوع</label>
-                <input type="number" value={formData.paidFees} onChange={(e) => setFormData({ ...formData, paidFees: e.target.value })} className="w-full bg-bg border border-border rounded-xl px-4 py-2.5 focus:border-primary focus:outline-none" />
-              </div>
-            </div>
-            <div className="p-3 bg-primary/5 border border-primary/10 rounded-xl flex justify-between items-center">
-              <span className="text-xs text-white/50">المبلغ المتبقي:</span>
-              <span className="font-bold text-danger">{(Number(formData.totalFees) || 0) - (Number(formData.paidFees) || 0)} ريال</span>
-            </div>
-            <button onClick={handleSubmit} className="w-full bg-primary py-3 rounded-xl font-bold mt-4 shadow-lg shadow-primary/20 hover:bg-primary/90 transition-all">حفظ البيانات</button>
-            
-          </div>
-        </motion.div>
-      </div>
-    );
-  };
-
   const AlarmModal = () => (
     <div className="fixed inset-0 z-[200] flex items-center justify-center p-4">
       {/* Calm Visual Alarm Background */}
@@ -2753,14 +2444,14 @@ ${clientsContext}`;
             onEdit={() => setEditingCase(selectedCase)}
           />
         )}
-        {showAddCase && <CaseModal onClose={() => setShowAddCase(false)} onSave={handleAddCase} />}
-        {editingCase && <CaseModal caseData={editingCase} onClose={() => setEditingCase(null)} onSave={handleUpdateCase} />}
+        {showAddCase && <CaseModal cases={cases} clients={clients} onClose={() => setShowAddCase(false)} onSave={handleAddCase} />}
+        {editingCase && <CaseModal caseData={editingCase} cases={cases} clients={clients} onClose={() => setEditingCase(null)} onSave={handleUpdateCase} />}
         
         {showAddClient && <ClientModal onClose={() => setShowAddClient(false)} onSave={handleAddClient} />}
         {editingClient && <ClientModal client={editingClient} onClose={() => setEditingClient(null)} onSave={handleUpdateClient} />}
         
-        {showAddSession && <SessionModal onClose={() => setShowAddSession(false)} onSave={handleAddSession} />}
-        {editingSession && <SessionModal session={editingSession} onClose={() => setEditingSession(null)} onSave={handleUpdateSession} />}
+        {showAddSession && <SessionModal cases={cases} onClose={() => setShowAddSession(false)} onSave={handleAddSession} />}
+        {editingSession && <SessionModal session={editingSession} cases={cases} onClose={() => setEditingSession(null)} onSave={handleUpdateSession} />}
 
         {isAlarmActive && <AlarmModal />}
         {confirmModal.show && <ConfirmationModal />}
@@ -2784,6 +2475,240 @@ ${clientsContext}`;
     </div>
   );
 }
+
+// ==========================================
+// النوافذ الجديدة (شاشة كاملة - خارج دالة App)
+// ==========================================
+
+const ClientModal = ({ client, onClose, onSave }: { client?: Client | null, onClose: () => void, onSave: (c: any) => void }) => {
+  const [formData, setFormData] = useState({
+    name: client?.name || '',
+    phone: client?.phone || '',
+    email: client?.email || '',
+  });
+
+  return (
+    <div className="fixed inset-0 bg-bg z-[200] overflow-hidden flex flex-col w-full h-full">
+      <div className="px-6 pb-4 pt-12 md:pt-6 border-b border-border flex items-center justify-between shrink-0 bg-card shadow-md">
+        <h2 className="text-xl font-bold text-white">{client ? 'تعديل بيانات العميل' : 'إضافة عميل جديد'}</h2>
+        <button onClick={onClose} className="p-2 bg-white/10 hover:bg-danger/20 hover:text-danger rounded-full transition-all text-white">
+          <X size={24} />
+        </button>
+      </div>
+      <div className="p-6 space-y-6 flex-1 overflow-y-auto pb-32"> 
+        <div className="space-y-2">
+          <label className="text-sm font-bold text-white/70">الاسم الكامل</label>
+          <input type="text" value={formData.name} onChange={e => setFormData({ ...formData, name: e.target.value })} className="w-full bg-black/20 border border-white/10 rounded-xl px-4 py-4 text-white focus:border-primary outline-none" />
+        </div>
+        <div className="space-y-2">
+          <label className="text-sm font-bold text-white/70">رقم الهاتف</label>
+          <input type="tel" value={formData.phone} onChange={e => setFormData({ ...formData, phone: e.target.value })} className="w-full bg-black/20 border border-white/10 rounded-xl px-4 py-4 text-white focus:border-primary outline-none" dir="ltr" />
+        </div>
+        <div className="space-y-2">
+          <label className="text-sm font-bold text-white/70">البريد الإلكتروني</label>
+          <input type="email" value={formData.email} onChange={e => setFormData({ ...formData, email: e.target.value })} className="w-full bg-black/20 border border-white/10 rounded-xl px-4 py-4 text-white focus:border-primary outline-none" dir="ltr" />
+        </div>
+        <button onClick={() => onSave(client ? { ...client, ...formData } : formData)} className="w-full bg-primary py-4 rounded-xl font-bold text-white shadow-lg text-lg mt-8">
+          حفظ البيانات
+        </button>
+      </div>
+    </div>
+  );
+};
+
+const SessionModal = ({ session, cases, onClose, onSave }: { session?: Session | null, cases: Case[], onClose: () => void, onSave: (s: any) => void }) => {
+  const [formData, setFormData] = useState({
+    caseId: session?.caseId || '',
+    caseTitle: session?.caseTitle || '',
+    clientId: session?.clientId || '',
+    clientName: session?.clientName || '',
+    clientPhone: session?.clientPhone || '',
+    clientEmail: session?.clientEmail || '',
+    date: session?.date || format(new Date(), 'yyyy-MM-dd'),
+    time: session?.time || '09:00',
+    description: session?.description || '',
+  });
+
+  const handleCaseSelect = (caseId: string) => {
+    const selected = cases.find(c => c.id === caseId);
+    if (selected) {
+      setFormData({
+        ...formData, caseId: selected.id, caseTitle: selected.title, clientId: selected.clientId, clientName: selected.clientName, clientPhone: selected.clientPhone, clientEmail: selected.clientEmail || '',
+      });
+    } else {
+      setFormData({ ...formData, caseId: '', caseTitle: '', clientId: '', clientName: '', clientPhone: '', clientEmail: '' });
+    }
+  };
+
+  return (
+    <div className="fixed inset-0 bg-bg z-[200] overflow-hidden flex flex-col w-full h-full">
+      <div className="px-6 pb-4 pt-12 md:pt-6 border-b border-border flex items-center justify-between shrink-0 bg-card shadow-md">
+        <h2 className="text-xl font-bold text-white">{session ? 'تعديل الجلسة' : 'إضافة جلسة جديدة'}</h2>
+        <button onClick={onClose} className="p-2 bg-white/10 hover:bg-danger/20 hover:text-danger rounded-full transition-all text-white"><X size={24} /></button>
+      </div>
+      <div className="p-6 space-y-6 flex-1 overflow-y-auto pb-32">
+        <div className="space-y-2">
+          <label className="text-sm font-bold text-white/70">اختر القضية</label>
+          <select value={formData.caseId} onChange={e => handleCaseSelect(e.target.value)} className="w-full bg-black/20 border border-white/10 rounded-xl px-4 py-4 text-white focus:border-primary outline-none">
+            <option value="">-- اختر القضية --</option>
+            {cases.map(c => <option key={c.id} value={c.id}>{c.title} (موكل: {c.clientName})</option>)}
+          </select>
+        </div>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div className="space-y-2">
+            <label className="text-sm font-bold text-white/70">التاريخ</label>
+            <input type="date" value={formData.date} onChange={e => setFormData({ ...formData, date: e.target.value })} className="w-full bg-black/20 border border-white/10 rounded-xl px-4 py-4 text-white focus:border-primary outline-none" />
+          </div>
+          <div className="space-y-2">
+            <label className="text-sm font-bold text-white/70">الوقت</label>
+            <input type="time" value={formData.time} onChange={e => setFormData({ ...formData, time: e.target.value })} className="w-full bg-black/20 border border-white/10 rounded-xl px-4 py-4 text-white focus:border-primary outline-none" />
+          </div>
+        </div>
+        <div className="bg-white/5 p-4 rounded-2xl border border-white/5 space-y-2">
+          <p className="text-xs text-white/40">بيانات الموكل (تلقائي):</p>
+          <div className="flex justify-between items-center">
+            <span className="text-sm font-bold">{formData.clientName || '---'}</span>
+            <span className="text-xs text-white/50">{formData.clientPhone || '---'}</span>
+          </div>
+        </div>
+        <div className="space-y-2">
+          <label className="text-sm font-bold text-white/70">الوصف</label>
+          <textarea value={formData.description} onChange={e => setFormData({ ...formData, description: e.target.value })} className="w-full bg-black/20 border border-white/10 rounded-xl px-4 py-4 text-white focus:border-primary outline-none h-32 resize-none" placeholder="اكتب تفاصيل الجلسة هنا..." />
+        </div>
+        <button onClick={() => onSave(session ? { ...session, ...formData } : formData)} disabled={!formData.caseId} className={cn("w-full py-4 rounded-xl font-bold text-white shadow-lg transition-all text-lg mt-8", formData.caseId ? "bg-primary shadow-primary/20 hover:bg-primary/90" : "bg-white/10 text-white/30 cursor-not-allowed")}>
+          حفظ الجلسة
+        </button>
+      </div>
+    </div>
+  );
+};
+
+const CaseModal = ({ caseData, cases, clients, onClose, onSave }: { caseData?: Case | null, cases: Case[], clients: Client[], onClose: () => void, onSave: (c: any) => void }) => {
+  const [formData, setFormData] = useState({
+    title: caseData?.title || '',
+    type: caseData?.type || 'جنائية',
+    court: caseData?.court || '',
+    clientName: caseData?.clientName || '',
+    clientPhone: caseData?.clientPhone || '',
+    clientEmail: caseData?.clientEmail || '',
+    totalFees: caseData?.totalFees || '',
+    paidFees: caseData?.paidFees || '',
+    priority: caseData?.priority || 'متوسطة',
+  });
+  const [suggestedClients, setSuggestedClients] = useState<Client[]>([]);
+
+  const handleClientInput = (val: string) => {
+    setFormData({ ...formData, clientName: val });
+    if (val.trim()) {
+      const matches = clients.filter(c => c.name.includes(val));
+      setSuggestedClients(matches);
+    } else {
+      setSuggestedClients([]);
+    }
+  };
+
+  const selectClient = (c: Client) => {
+    setFormData({ ...formData, clientName: c.name, clientPhone: c.phone, clientEmail: c.email || '' });
+    setSuggestedClients([]);
+  };
+
+  const handleSubmit = () => {
+    if (caseData) {
+      onSave({ ...caseData, ...formData, totalFees: Number(formData.totalFees), paidFees: Number(formData.paidFees), priority: formData.priority as any });
+    } else {
+      const newCase: Case = {
+        id: Math.random().toString(36).substr(2, 9),
+        caseNumber: (cases.length + 1).toString(),
+        title: formData.title, type: formData.type, court: formData.court, clientId: 'custom',
+        clientName: formData.clientName, clientPhone: formData.clientPhone, clientEmail: formData.clientEmail,
+        status: 'نشطة', startDate: format(new Date(), 'yyyy-MM-dd'),
+        totalFees: Number(formData.totalFees), paidFees: Number(formData.paidFees) || 0,
+        progress: 0, priority: formData.priority as any,
+        timeline: [{ id: 't1', date: format(new Date(), 'yyyy-MM-dd'), title: 'تم استلام القضية', description: 'بدء العمل على ملف القضية', isCompleted: true }],
+        tasks: []
+      };
+      onSave(newCase);
+    }
+  };
+
+  return (
+    <div className="fixed inset-0 bg-bg z-[200] overflow-hidden flex flex-col w-full h-full">
+      <div className="px-6 pb-4 pt-12 md:pt-6 border-b border-border flex items-center justify-between shrink-0 bg-card shadow-md">
+        <h2 className="text-xl font-bold text-white">{caseData ? 'تعديل القضية' : 'إضافة قضية جديدة'}</h2>
+        <button onClick={onClose} className="p-2 bg-white/10 hover:bg-danger/20 hover:text-danger rounded-full transition-all text-white"><X size={24} /></button>
+      </div>
+      <div className="p-6 space-y-6 flex-1 overflow-y-auto pb-32">
+        <div className="space-y-2">
+          <label className="text-sm font-bold text-white/70">عنوان القضية</label>
+          <input type="text" value={formData.title} onChange={(e) => setFormData({ ...formData, title: e.target.value })} className="w-full bg-black/20 border border-white/10 rounded-xl px-4 py-4 text-white focus:border-primary outline-none" />
+        </div>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div className="space-y-2">
+            <label className="text-sm font-bold text-white/70">نوع القضية</label>
+            <select value={formData.type} onChange={(e) => setFormData({ ...formData, type: e.target.value })} className="w-full bg-black/20 border border-white/10 rounded-xl px-4 py-4 text-white focus:border-primary outline-none">
+              <option value="جنائية">جنائية</option>
+              <option value="مدنية">مدنية</option>
+              <option value="أحوال شخصية">أحوال شخصية</option>
+              <option value="تجارية">تجارية</option>
+            </select>
+          </div>
+          <div className="space-y-2">
+            <label className="text-sm font-bold text-white/70">المحكمة</label>
+            <input type="text" value={formData.court} onChange={(e) => setFormData({ ...formData, court: e.target.value })} className="w-full bg-black/20 border border-white/10 rounded-xl px-4 py-4 text-white focus:border-primary outline-none" />
+          </div>
+        </div>
+        <div className="space-y-2 relative">
+          <label className="text-sm font-bold text-white/70">اسم الموكل</label>
+          <input type="text" value={formData.clientName} onChange={(e) => handleClientInput(e.target.value)} className="w-full bg-black/20 border border-white/10 rounded-xl px-4 py-4 text-white focus:border-primary outline-none" />
+          {suggestedClients.length > 0 && (
+            <div className="absolute top-full right-0 left-0 bg-card border border-border rounded-xl mt-1 z-10 shadow-xl overflow-hidden">
+              {suggestedClients.map(c => (
+                <button key={c.id} onClick={() => selectClient(c)} className="w-full text-right px-4 py-3 hover:bg-primary/10 text-sm transition-colors">{c.name} - {c.phone}</button>
+              ))}
+            </div>
+          )}
+        </div>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div className="space-y-2">
+            <label className="text-sm font-bold text-white/70">رقم الهاتف</label>
+            <input type="tel" value={formData.clientPhone} onChange={(e) => setFormData({ ...formData, clientPhone: e.target.value })} className="w-full bg-black/20 border border-white/10 rounded-xl px-4 py-4 text-white focus:border-primary outline-none" dir="ltr" />
+          </div>
+          <div className="space-y-2">
+            <label className="text-sm font-bold text-white/70">البريد الإلكتروني</label>
+            <input type="email" value={formData.clientEmail} onChange={(e) => setFormData({ ...formData, clientEmail: e.target.value })} className="w-full bg-black/20 border border-white/10 rounded-xl px-4 py-4 text-white focus:border-primary outline-none" dir="ltr" />
+          </div>
+        </div>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div className="space-y-2">
+            <label className="text-sm font-bold text-white/70">الأولوية</label>
+            <select value={formData.priority} onChange={(e) => setFormData({ ...formData, priority: e.target.value as any })} className="w-full bg-black/20 border border-white/10 rounded-xl px-4 py-4 text-white focus:border-primary outline-none">
+              <option value="عالية">عالية</option>
+              <option value="متوسطة">متوسطة</option>
+              <option value="منخفضة">منخفضة</option>
+            </select>
+          </div>
+          <div className="space-y-2">
+            <label className="text-sm font-bold text-white/70">تاريخ البدء</label>
+            <input type="date" value={formData.startDate} onChange={(e) => setFormData({ ...formData, startDate: e.target.value })} className="w-full bg-black/20 border border-white/10 rounded-xl px-4 py-4 text-white focus:border-primary outline-none" />
+          </div>
+        </div>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div className="space-y-2">
+            <label className="text-sm font-bold text-white/70">إجمالي الأتعاب</label>
+            <input type="number" value={formData.totalFees} onChange={(e) => setFormData({ ...formData, totalFees: e.target.value })} className="w-full bg-black/20 border border-white/10 rounded-xl px-4 py-4 text-white focus:border-primary outline-none" />
+          </div>
+          <div className="space-y-2">
+            <label className="text-sm font-bold text-white/70">المبلغ المدفوع</label>
+            <input type="number" value={formData.paidFees} onChange={(e) => setFormData({ ...formData, paidFees: e.target.value })} className="w-full bg-black/20 border border-white/10 rounded-xl px-4 py-4 text-white focus:border-primary outline-none" />
+          </div>
+        </div>
+        <button onClick={handleSubmit} className="w-full bg-primary py-4 rounded-xl font-bold text-white shadow-lg mt-8 hover:bg-primary/90 transition-all text-lg">
+          حفظ البيانات
+        </button>
+      </div>
+    </div>
+  );
+};
 
 const CaseDetails = ({ 
   caseData, 
