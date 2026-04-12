@@ -1047,6 +1047,43 @@ export default function App() {
     });
   };
 
+ // --- 1. دوال الجدولة المسبقة لنظام أندرويد (تمت إضافتها هنا) ---
+  const scheduleNativeNotification = async (session: Session) => {
+    try {
+      const dateObj = new Date(`${session.date}T${session.time}`);
+      // نبرمج الإشعار فقط إذا كان وقت الجلسة في المستقبل
+      if (dateObj > new Date()) {
+        const numericId = Math.abs(session.id.split('').reduce((a, b) => {
+          a = ((a << 5) - a) + b.charCodeAt(0); return a & a;
+        }, 0));
+
+        await LocalNotifications.schedule({
+          notifications: [{
+            id: numericId,
+            title: "🔔 تنبيه: موعد جلسة الآن!",
+            body: `القضية: ${session.caseTitle}\nالموكل: ${session.clientName}\nاضغط هنا للدخول للتطبيق.`,
+            schedule: { at: dateObj },
+            sound: "beep.wav", 
+            actionTypeId: "ALARM_ACTION"
+          }]
+        });
+        console.log("تمت جدولة الإشعار بنجاح في نظام أندرويد:", dateObj);
+      }
+    } catch (e) {
+      console.log('فشلت الجدولة في النظام:', e);
+    }
+  };
+
+  const cancelNativeNotification = async (sessionId: string) => {
+    try {
+      const numericId = Math.abs(sessionId.split('').reduce((a, b) => {
+        a = ((a << 5) - a) + b.charCodeAt(0); return a & a;
+      }, 0));
+      await LocalNotifications.cancel({ notifications: [{ id: numericId }] });
+    } catch (e) {}
+  };
+
+  // --- 2. تعديل دوال الجلسات لربطها بالجدولة ---
   const handleDeleteSession = (id: string) => {
     setConfirmModal({
       show: true,
@@ -1054,6 +1091,7 @@ export default function App() {
       message: 'هل أنت متأكد من رغبتك في حذف هذه الجلسة؟',
       onConfirm: () => {
         setSessions(prev => prev.filter(s => s.id !== id));
+        cancelNativeNotification(id); // <--- إرسال أمر للنظام بإلغاء التنبيه
         setConfirmModal(prev => ({ ...prev, show: false }));
       }
     });
@@ -1093,11 +1131,13 @@ export default function App() {
   const handleAddSession = (session: Omit<Session, 'id'>) => {
     const newSession = { ...session, id: Math.random().toString(36).substr(2, 9) };
     setSessions(prev => [...prev, newSession]);
+    scheduleNativeNotification(newSession); // <--- إرسال أمر للنظام بجدولة التنبيه
     setShowAddSession(false);
   };
 
   const handleUpdateSession = (session: Session) => {
     setSessions(prev => prev.map(s => s.id === session.id ? session : s));
+    scheduleNativeNotification(session); // <--- تحديث الجدولة في النظام
     setEditingSession(null);
   };
 
